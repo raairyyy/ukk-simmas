@@ -1,11 +1,8 @@
 "use client"
 
 import {
-  LayoutDashboard,
   Building2,
-  Users,
   Settings,
-  GraduationCap,
   Pencil,
   Eye,
   Printer,
@@ -28,41 +25,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export default function SettingsPage() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex font-sans text-slate-900">
-      
-      {/* === SIDEBAR === */}
-      <aside className="w-[280px] bg-white border-r border-slate-100 hidden md:flex flex-col fixed h-full z-20 px-6 py-8">
-        <div className="flex items-center gap-4 px-2 mb-10">
-          <div className="w-12 h-12 bg-[#0EA5E9] rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-            <GraduationCap size={26} strokeWidth={2.5} />
-          </div>
-          <div>
-            <h1 className="font-extrabold text-xl leading-none text-slate-800 tracking-tight">SIMMAS</h1>
-            <p className="text-sm font-medium text-slate-500 mt-1.5">Panel Admin</p>
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-4">
-          <SidebarItem icon={<LayoutDashboard size={24} />} label="Dashboard" subLabel="Ringkasan sistem" href="/dashboard/admin" />
-          <SidebarItem icon={<Building2 size={24} />} label="DUDI" subLabel="Manajemen DUDI" href="/dashboard/admin/dudi" />
-          <SidebarItem icon={<Users size={24} />} label="Pengguna" subLabel="Manajemen user" href="/dashboard/admin/users" />
-          <SidebarItem icon={<Settings size={24} />} label="Pengaturan" subLabel="Konfigurasi sistem" active />
-        </nav>
-
-        <div className="mt-auto">
-          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex items-center gap-4">
-            <div className="w-3 h-3 rounded-full bg-lime-500 shadow-[0_0_10px_rgba(132,204,22,0.6)] shrink-0"></div>
-            <div>
-              <p className="text-sm font-bold text-slate-700">SMK Negeri 1 Surabaya</p>
-              <p className="text-xs text-slate-500 mt-1">Sistem Pelaporan v1.0</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* === MAIN CONTENT === */}
-      <main className="flex-1 md:ml-[280px] min-w-0">
-        
+    <>
         {/* Header */}
         <header className="bg-white border-b border-slate-100 h-[90px] px-10 flex items-center justify-between sticky top-0 z-10">
           <div>
@@ -87,7 +50,6 @@ export default function SettingsPage() {
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Pengaturan Sekolah</h1>
           </div>
 
-          {/* GRID LAYOUT UTAMA: Diubah menjadi 2 Kolom (1/2 Kiri, 1/2 Kanan) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             
             {/* === KOLOM KIRI: FORM EDIT (Lebar 50%) === */}
@@ -295,27 +257,6 @@ export default function SettingsPage() {
 
           </div>
         </div>
-      </main>
-    </div>
-  )
-}
-
-function SidebarItem({ icon, label, subLabel, active, href }: any) {
-  return (
-    <div
-      className={`group flex items-center gap-4 p-4 mx-0 rounded-2xl cursor-pointer transition-all duration-200 ${
-        active
-          ? "bg-[#0EA5E9] text-white shadow-lg shadow-blue-200/50"
-          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-      }`}
-    >
-      <div className={`${active ? "text-white" : "text-slate-400 group-hover:text-slate-600"}`}>
-        {icon}
-      </div>
-      <div>
-        <p className={`text-base font-bold`}>{label}</p>
-        <p className={`text-sm mt-0.5 ${active ? "text-blue-100 font-medium" : "text-slate-400"}`}>{subLabel}</p>
-      </div>
-    </div>
+    </>
   )
 }
