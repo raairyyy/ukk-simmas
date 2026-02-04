@@ -2,11 +2,7 @@
 
 import { useState } from "react"
 import {
-  LayoutDashboard,
-  Building2,
   Users,
-  Settings,
-  GraduationCap,
   Plus,
   Search,
   Pencil,
@@ -18,7 +14,8 @@ import {
   Filter,
   Lock,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  GraduationCap
 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -57,7 +54,6 @@ export default function UserManagement() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
 
-  // Data Dummy Sesuai Screenshot
   const users = [
     { id: 1, name: "Admin Sistem", email: "admin@gmail.com", role: "Admin", verified: true, joined: "1 Jan 2024", avatar: "AS" },
     { id: 2, name: "Pak Suryanto", email: "suryanto@teacher.com", role: "Guru", verified: true, joined: "2 Jan 2024", avatar: "PS" },
@@ -77,41 +73,7 @@ export default function UserManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex font-sans text-slate-900">
-      
-      {/* === SIDEBAR === */}
-      <aside className="w-[280px] bg-white border-r border-slate-100 hidden md:flex flex-col fixed h-full z-20 px-6 py-8">
-        <div className="flex items-center gap-4 px-2 mb-10">
-          <div className="w-12 h-12 bg-[#0EA5E9] rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-            <GraduationCap size={24} strokeWidth={2.5} />
-          </div>
-          <div>
-            <h1 className="font-extrabold text-xl leading-none text-slate-800 tracking-tight">SIMMAS</h1>
-            <p className="text-sm font-medium text-slate-500 mt-1.5">Panel Admin</p>
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-4">
-          <SidebarItem icon={<LayoutDashboard size={24} />} label="Dashboard" subLabel="Ringkasan sistem" href="/dashboard/admin" />
-          <SidebarItem icon={<Building2 size={24} />} label="DUDI" subLabel="Manajemen DUDI" href="/dashboard/admin/dudi" />
-          <SidebarItem icon={<Users size={24} />} label="Pengguna" subLabel="Manajemen user" active />
-          <SidebarItem icon={<Settings size={24} />} label="Pengaturan" subLabel="Konfigurasi sistem" />
-        </nav>
-
-        <div className="mt-auto">
-          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex items-center gap-4">
-            <div className="w-3 h-3 rounded-full bg-lime-500 shadow-[0_0_10px_rgba(132,204,22,0.6)] shrink-0"></div>
-            <div>
-              <p className="text-sm font-bold text-slate-700">SMK Negeri 1 Surabaya</p>
-              <p className="text-xs text-slate-500 mt-1">Sistem Pelaporan v1.0</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* === MAIN CONTENT === */}
-      <main className="flex-1 md:ml-[280px] min-w-0">
-        
+    <>
         {/* Header */}
         <header className="bg-white border-b border-slate-100 h-[90px] px-10 flex items-center justify-between sticky top-0 z-10">
           <div>
@@ -140,11 +102,10 @@ export default function UserManagement() {
           <Card className="border-none shadow-sm rounded-[20px] bg-white overflow-hidden min-h-[600px]">
             <div className="p-8 space-y-8">
                 
-                {/* Header Section: Title & Add Button */}
+                {/* Header Section */}
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-transparent text-[#0EA5E9]">
-                           {/* Icon user outlined simple */}
                            <Users size={28} strokeWidth={2} />
                         </div>
                         <h3 className="text-2xl font-bold text-slate-800">Daftar User</h3>
@@ -158,9 +119,8 @@ export default function UserManagement() {
                     </Button>
                 </div>
 
-                {/* Toolbar: Search & Filter */}
+                {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row justify-between gap-4 sm:items-center mt-2">
-                    {/* Search Input */}
                     <div className="relative w-full sm:w-[450px]">
                         <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
                         <Input 
@@ -169,9 +129,7 @@ export default function UserManagement() {
                         />
                     </div>
                     
-                    {/* Filter Right Side */}
                     <div className="flex items-center gap-6 w-full sm:w-auto justify-end">
-                        {/* Filter Dropdown */}
                         <div className="flex items-center gap-2">
                             <Filter size={20} className="text-slate-400"/>
                             <Select defaultValue="all">
@@ -187,7 +145,6 @@ export default function UserManagement() {
                             </Select>
                         </div>
                         
-                        {/* Pagination Dropdown */}
                         <div className="flex items-center gap-2">
                            <span className="text-base text-slate-600 font-medium">Tampilkan:</span>
                            <Select defaultValue="5">
@@ -205,7 +162,7 @@ export default function UserManagement() {
                     </div>
                 </div>
 
-                {/* Table Section */}
+                {/* Table */}
                 <div className="overflow-hidden mt-4">
                     <Table>
                     <TableHeader>
@@ -220,10 +177,8 @@ export default function UserManagement() {
                     <TableBody>
                         {users.map((user) => (
                            <TableRow key={user.id} className="group border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                             {/* USER COLUMN */}
                              <TableCell className="pl-0 py-6 align-top">
                                <div className="flex items-start gap-4">
-                                 {/* Avatar Bulat (rounded-full) Biru */}
                                  <Avatar className="h-12 w-12 rounded-full bg-[#0093E9] text-white">
                                    <AvatarFallback className="bg-[#0093E9] text-white font-bold text-sm">{user.avatar}</AvatarFallback>
                                  </Avatar>
@@ -234,7 +189,6 @@ export default function UserManagement() {
                                </div>
                              </TableCell>
 
-                             {/* EMAIL COLUMN */}
                              <TableCell className="py-6 align-top">
                                <div className="flex flex-col gap-2 pt-1">
                                  <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
@@ -249,9 +203,7 @@ export default function UserManagement() {
                                </div>
                              </TableCell>
 
-                             {/* ROLE COLUMN */}
                              <TableCell className="text-center py-6 align-top pt-8">
-                               {/* Badge Logic sesuai gambar (Admin=Ungu, Guru=Biru, Siswa=Cyan) */}
                                <Badge className={`border-none px-4 py-1.5 text-xs font-bold shadow-none rounded-lg capitalize min-w-[90px] justify-center inline-flex items-center gap-2 ${
                                   user.role === 'Admin' ? "bg-purple-100 text-purple-600 hover:bg-purple-100" :
                                   user.role === 'Guru' ? "bg-blue-100 text-blue-600 hover:bg-blue-100" :
@@ -264,12 +216,10 @@ export default function UserManagement() {
                                </Badge>
                              </TableCell>
 
-                             {/* DATE COLUMN */}
                              <TableCell className="text-center py-6 align-top pt-8">
                                 <span className="text-sm font-medium text-slate-600">{user.joined}</span>
                              </TableCell>
 
-                             {/* ACTION COLUMN */}
                              <TableCell className="pr-0 text-center py-6 align-top pt-7">
                                 <div className="flex items-center justify-center gap-2">
                                     <Button onClick={() => handleEdit(user)} variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
@@ -308,7 +258,6 @@ export default function UserManagement() {
             </div>
           </Card>
         </div>
-      </main>
 
       {/* === MODAL TAMBAH USER === */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -431,27 +380,6 @@ export default function UserManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-    </div>
-  )
-}
-
-function SidebarItem({ icon, label, subLabel, active, href }: any) {
-  return (
-    <div
-      className={`group flex items-center gap-4 p-4 mx-0 rounded-2xl cursor-pointer transition-all duration-200 ${
-        active
-          ? "bg-[#0EA5E9] text-white shadow-lg shadow-blue-200/50"
-          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-      }`}
-    >
-      <div className={`${active ? "text-white" : "text-slate-400 group-hover:text-slate-600"}`}>
-        {icon}
-      </div>
-      <div>
-        <p className={`text-base font-bold`}>{label}</p>
-        <p className={`text-sm mt-0.5 ${active ? "text-blue-100 font-medium" : "text-slate-400"}`}>{subLabel}</p>
-      </div>
-    </div>
+    </>
   )
 }
