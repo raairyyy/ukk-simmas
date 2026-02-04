@@ -4,16 +4,55 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react"
+import { useRouter } from "next/navigation"
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    console.log({ email, password })
+
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault()
+
+  try {
+    const res = await fetch("/api/auth/login", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ email, password }),
+  credentials: "include", // 🔥 WAJIB
+})
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      alert(data.error || "Login failed")
+      return
+    }
+
+
+// Ganti router.push dengan ini agar browser melakukan full reload 
+// dan mengirim cookie terbaru ke middleware
+if (data.role === "admin") {
+  window.location.href = "/dashboard/admin"
+} else if (data.role === "guru") {
+  window.location.href = "/dashboard/guru"
+} else if (data.role === "siswa") {
+  window.location.href = "/dashboard/siswa"
+}
+
+
+
+  } catch (err) {
+    console.error("Login error:", err)
+    alert("Server error")
   }
+}
+
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#eef3ff] via-[#f5f8ff] to-[#eef3ff]">
