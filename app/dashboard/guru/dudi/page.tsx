@@ -31,7 +31,7 @@ export default function GuruDudiPage() {
       {/* Header Page */}
       <header className="bg-white border-b border-slate-100 h-[90px] px-10 flex items-center justify-between sticky top-0 z-10">
         <div>
-          <h2 className="font-bold text-xl text-slate-800">SMK Negeri 1 Surabaya</h2>
+          <h2 className="font-bold text-xl text-slate-800">SMK bRANTAS Karangkates</h2>
           <p className="text-sm text-slate-500 mt-1 font-medium">Sistem Manajemen Magang Siswa</p>
         </div>
         <div className="flex items-center gap-6">

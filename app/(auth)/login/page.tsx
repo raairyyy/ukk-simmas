@@ -12,44 +12,64 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
+  const [error, setError] = useState("")
+  const [emailError, setEmailError] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+
 
 
 const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault()
 
+  // reset semua error
+  setEmailError("")
+  setPasswordError("")
+  setError("")
+
+  // flag untuk cek apakah ada error
+  let hasError = false
+
+  // validasi email
+  if (!email) {
+    setEmailError("Email wajib diisi")
+    hasError = true
+  } else if (!email.includes("@")) {
+    setEmailError("Format email tidak valid")
+    hasError = true
+  }
+
+  // validasi password
+  if (!password) {
+    setPasswordError("Password wajib diisi")
+    hasError = true
+  }
+
+  // kalau ada error, hentikan submit
+  if (hasError) return
+
+  // lanjut ke fetch API
   try {
     const res = await fetch("/api/auth/login", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({ email, password }),
-  credentials: "include", // 🔥 WAJIB
-})
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+      credentials: "include",
+    })
 
     const data = await res.json()
 
     if (!res.ok) {
-      alert(data.error || "Login failed")
+      if (data.field === "email") setEmailError(data.message)
+      if (data.field === "password") setPasswordError(data.message)
       return
     }
 
-
-// Ganti router.push dengan ini agar browser melakukan full reload 
-// dan mengirim cookie terbaru ke middleware
-if (data.role === "admin") {
-  window.location.href = "/dashboard/admin"
-} else if (data.role === "guru") {
-  window.location.href = "/dashboard/guru"
-} else if (data.role === "siswa") {
-  window.location.href = "/dashboard/siswa"
-}
-
-
+    if (data.role === "admin") window.location.href = "/dashboard/admin"
+    else if (data.role === "guru") window.location.href = "/dashboard/guru"
+    else if (data.role === "siswa") window.location.href = "/dashboard/siswa"
 
   } catch (err) {
-    console.error("Login error:", err)
-    alert("Server error")
+    setError("Server error")
   }
 }
 
@@ -78,6 +98,13 @@ if (data.role === "admin") {
           Sign in to your account
         </p>
 
+        {error && (
+          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+            {error}
+          </div>
+        )}
+
+
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
 
@@ -86,48 +113,72 @@ if (data.role === "admin") {
             <label className="text-sm font-medium text-gray-700">
               Email Address
             </label>
+
             <div className="relative">
               <Mail className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
               <Input
                 type="email"
                 placeholder="Enter your email"
-                className="pl-10 h-11 rounded-lg bg-white/80 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e) => {
                   setEmail(e.target.value)
-                }
+                  setEmailError("")
+                }}
+
+                className={`pl-10 h-11 rounded-lg bg-white/80 transition
+                  ${emailError
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  }`}
               />
             </div>
+
+            {emailError && (
+              <p className="text-xs text-red-600 flex items-center gap-1">
+                <span>•</span> {emailError}
+              </p>
+            )}
           </div>
+
 
           {/* Password */}
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-700">
               Password
             </label>
+
             <div className="relative">
               <Lock className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
-                className="pl-10 pr-10 h-11 rounded-lg bg-white/80 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e) => {
                   setPassword(e.target.value)
-                }
+                  setPasswordError("")
+                }}
+                className={`pl-10 pr-10 h-11 rounded-lg bg-white/80 transition
+                  ${passwordError
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : "border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  }`}
               />
+
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition"
+                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
               >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+
+            {passwordError && (
+              <p className="text-xs text-red-600 flex items-center gap-1">
+                <span>•</span> {passwordError}
+              </p>
+            )}
           </div>
 
           {/* Button */}

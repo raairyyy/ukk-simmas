@@ -20,7 +20,7 @@ export default function AdminDashboard() {
       {/* Header */}
       <header className="bg-white border-b border-slate-100 h-[88px] px-10 flex items-center justify-between sticky top-0 z-10">
         <div>
-          <h2 className="font-bold text-lg text-slate-800">SMK Negeri 1 Surabaya</h2>
+          <h2 className="font-bold text-lg text-slate-800">SMK Brantas Karangkates</h2>
           <p className="text-xs text-slate-500 mt-1 font-medium">Sistem Manajemen Magang Siswa</p>
         </div>
         <div className="flex items-center gap-5">
@@ -38,7 +38,7 @@ export default function AdminDashboard() {
       <div className="p-10 max-w-[1680px] mx-auto space-y-10">
         <div>
           <h1 className="text-[32px] font-extrabold text-slate-900 tracking-tight">Dashboard</h1>
-          <p className="text-slate-500 mt-2 text-sm font-medium">Selamat datang di sistem pelaporan magang siswa SMK Negeri 1 Surabaya</p>
+          <p className="text-slate-500 mt-2 text-sm font-medium">Selamat datang di sistem pelaporan magang siswa SMK Brantas Karangkates</p>
         </div>
 
         {/* Stat Cards */}

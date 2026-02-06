@@ -29,7 +29,7 @@ export default function SettingsPage() {
         {/* Header */}
         <header className="bg-white border-b border-slate-100 h-[90px] px-10 flex items-center justify-between sticky top-0 z-10">
           <div>
-            <h2 className="font-bold text-xl text-slate-800">SMK Negeri 1 Surabaya</h2>
+            <h2 className="font-bold text-xl text-slate-800">SMK Brantas Karangkates</h2>
             <p className="text-sm text-slate-500 mt-1 font-medium">Sistem Manajemen Magang Siswa</p>
           </div>
           <div className="flex items-center gap-6">
@@ -84,7 +84,7 @@ export default function SettingsPage() {
                       <Label className="text-sm font-semibold text-slate-500 ml-1 flex items-center gap-2">
                         <Building2 size={16} /> Nama Sekolah/Instansi
                       </Label>
-                      <Input defaultValue="SMK Negeri 1 Surabaya" className="h-[46px] text-[15px] rounded-xl border-slate-100 bg-[#F8FAFC] font-medium text-slate-700 focus:bg-white focus:border-blue-200 transition-all" />
+                      <Input defaultValue="SMK Brantas Karangkates" className="h-[46px] text-[15px] rounded-xl border-slate-100 bg-[#F8FAFC] font-medium text-slate-700 focus:bg-white focus:border-blue-200 transition-all" />
                    </div>
 
                    {/* Alamat Lengkap */}
@@ -169,7 +169,7 @@ export default function SettingsPage() {
                            <span className="text-[10px] font-bold text-slate-400">Logo</span>
                         </div>
                         <div>
-                           <h5 className="font-bold text-slate-800 text-sm">SMK Negeri 1 Surabaya</h5>
+                           <h5 className="font-bold text-slate-800 text-sm">SMK Brantas Karangkates</h5>
                            <p className="text-xs text-slate-500">Sistem Informasi Magang</p>
                         </div>
                      </div>
@@ -189,7 +189,7 @@ export default function SettingsPage() {
                               <span className="text-[10px] font-bold text-slate-400">Logo</span>
                            </div>
                            <div className="text-left">
-                              <h5 className="font-black text-slate-900 text-sm uppercase tracking-wide leading-tight">SMK Negeri 1 Surabaya</h5>
+                              <h5 className="font-black text-slate-900 text-sm uppercase tracking-wide leading-tight">SMK Brantas Karangkates</h5>
                               <p className="text-[10px] text-slate-500 leading-tight mt-1 max-w-[200px]">
                                  Jl. SMEA No.4, Surabaya, Jawa Timur
                               </p>
@@ -221,7 +221,7 @@ export default function SettingsPage() {
                               <ImageIcon size={14} className="text-slate-300" />
                            </div>
                            <div>
-                              <p className="font-bold text-xs text-slate-800">SMK Negeri 1 Surabaya</p>
+                              <p className="font-bold text-xs text-slate-800">SMK Brantas Karangkates</p>
                               <p className="text-[10px] text-slate-400 font-mono">NPSN: 20567890</p>
                            </div>
                         </div>
