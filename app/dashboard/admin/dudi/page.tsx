@@ -22,7 +22,7 @@ type Dudi = {
   email: string
   telepon: string
   penanggung_jawab: string
-  status: "aktif" | "Tidak Aktif" 
+  status: "aktif" | "nonaktif" 
 }
 
 export default function DudiManagement() {
@@ -81,10 +81,16 @@ export default function DudiManagement() {
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Manajemen DUDI</h1>
 
         {/* Grid */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
           <StatCardDudi title="Total DUDI" value={dudiList.length} desc="Perusahaan mitra" icon={<Building2 className="text-[#0EA5E9]" size={28} />} />
+          
+          {/* Perbaikan: status === "aktif" */}
           <StatCardDudi title="DUDI Aktif" value={dudiList.filter(d => d.status === "aktif").length} desc="Perusahaan aktif" icon={<CheckCircle2 className="text-[#16A34A]" size={28} />} />
-          <StatCardDudi title="DUDI Tidak Aktif" value={dudiList.filter(d => d.status === "Tidak Aktif").length} desc="Perusahaan tidak aktif"icon={<XCircle className="text-[#DC2626]" size={28} />} />
+          
+          {/* Perbaikan: status === "nonaktif" sesuai database */}
+          <StatCardDudi title="DUDI Tidak Aktif" value={dudiList.filter(d => d.status === "nonaktif").length} desc="Perusahaan tidak aktif" icon={<XCircle className="text-[#DC2626]" size={28} />} />
+          
           <StatCardDudi title="Total Siswa Magang" value={0} desc="Siswa magang aktif" icon={<Users className="text-[#0EA5E9]" size={28} />} />
         </div>
 
