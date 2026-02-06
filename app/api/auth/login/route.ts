@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const user = users.find((u) => u.email === email)
     if (!user) {
       return NextResponse.json(
-        { field: "email", message: "Email tidak terdaftar" },
+        { error: "User not found" },
         { status: 401 }
       )
     }
@@ -28,12 +28,10 @@ export async function POST(req: Request) {
     const isValid = await bcrypt.compare(password, user.password)
     if (!isValid) {
       return NextResponse.json(
-        { field: "password", message: "Password salah" },
+        { error: "Invalid password" },
         { status: 401 }
       )
     }
-
-
 
     const token = jwt.sign(
       {
