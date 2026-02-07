@@ -213,6 +213,7 @@ const handleSubmit = async () => {
                         status={d.status}
                         total_siswa_magang={d.total_siswa_magang}
                         is_deleted={d.is_deleted}   // ✅ tambahkan ini
+                        fetchDudi={fetchDudi}
                       />
                     ))
 
@@ -298,7 +299,7 @@ function StatCardDudi({ title, value, desc, icon }: any) {
   )
 }
 
-function DudiRow({ nama_perusahaan, alamat, email, telepon, penanggung_jawab, status, total_siswa_magang,id, is_deleted }: Dudi & { total_siswa_magang: number }) {
+function DudiRow({ nama_perusahaan, alamat, email, telepon, penanggung_jawab, status, total_siswa_magang,id, is_deleted }: Dudi & { total_siswa_magang: number, fetchDudi: () => void}) {
   const isAktif = status === "aktif"
   const initials = penanggung_jawab
     ? penanggung_jawab.split(' ').map(n => n[0]).join('').substring(0, 2)

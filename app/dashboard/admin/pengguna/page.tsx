@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+
 import { supabase } from "@/lib/supabase"
 import {
   Users,
@@ -50,6 +51,16 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 
 export default function UserManagement() {
+
+    const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    role: "",
+    password: "",
+    confirmPassword: "",
+    verified: false,
+  })
+  
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
@@ -57,6 +68,8 @@ export default function UserManagement() {
 
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+  
 useEffect(() => {
   fetchUsers()
 }, [])
@@ -88,6 +101,86 @@ const fetchUsers = async () => {
     setSelectedUser(user)
     setIsDeleteOpen(true)
   }
+
+  const handleCreateUser = async () => {
+  if (
+    !formData.name ||
+    !formData.email ||
+    !formData.role ||
+    !formData.password
+  ) {
+    alert("Semua field wajib diisi")
+    return
+  }
+
+  if (formData.password !== formData.confirmPassword) {
+    alert("Password tidak cocok")
+    return
+  }
+
+  // INSERT ke tabel users
+  const { error } = await supabase.from("users").insert([
+    {
+      name: formData.name,
+      email: formData.email,
+      role: formData.role,
+      password: formData.password, // ⚠ nanti kita bisa hash
+      verified: formData.verified,
+    },
+  ])
+
+  if (error) {
+    alert(error.message)
+  } else {
+    alert("User berhasil ditambahkan")
+    setIsAddOpen(false)
+    fetchUsers()
+    setFormData({
+      name: "",
+      email: "",
+      role: "",
+      password: "",
+      confirmPassword: "",
+      verified: false,
+    })
+  }
+}
+
+const handleUpdateUser = async () => {
+  const { error } = await supabase
+    .from("users")
+    .update({
+      name: selectedUser.name,
+      email: selectedUser.email,
+      role: selectedUser.role,
+      verified: selectedUser.verified,
+    })
+    .eq("id", selectedUser.id)
+
+  if (error) {
+    alert(error.message)
+  } else {
+    alert("User berhasil diupdate")
+    setIsEditOpen(false)
+    fetchUsers()
+  }
+}
+
+const confirmDeleteUser = async () => {
+  const { error } = await supabase
+    .from("users")
+    .delete()
+    .eq("id", selectedUser.id)
+
+  if (error) {
+    alert(error.message)
+  } else {
+    alert("User berhasil dihapus")
+    setIsDeleteOpen(false)
+    fetchUsers()
+  }
+}
+
 
   return (
     <>
@@ -261,12 +354,21 @@ const fetchUsers = async () => {
 
                             <TableCell className="text-center py-6">
                               <div className="flex justify-center gap-2">
-                                <Button size="icon" variant="ghost">
-                                  <Pencil size={18} />
-                                </Button>
-                                <Button size="icon" variant="ghost">
-                                  <Trash2 size={18} />
-                                </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleEdit(user)}
+                              >
+                                <Pencil size={18} />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleDelete(user)}
+                              >
+                                <Trash2 size={18} />
+                              </Button>
+
                               </div>
                             </TableCell>
 
@@ -313,37 +415,81 @@ const fetchUsers = async () => {
           <div className="grid gap-6 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name" className="text-base font-semibold text-slate-700">Nama Lengkap</Label>
-              <Input id="name" placeholder="Contoh: Ahmad Rizki" className="h-12 text-base rounded-xl border-slate-200" />
+<Input
+  id="name"
+  placeholder="Contoh: Ahmad Rizki"
+  className="h-12 text-base rounded-xl border-slate-200"
+  value={formData.name}
+  onChange={(e) =>
+    setFormData({ ...formData, name: e.target.value })
+  }
+/>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email" className="text-base font-semibold text-slate-700">Email</Label>
-              <Input id="email" type="email" placeholder="contoh@sekolah.sch.id" className="h-12 text-base rounded-xl border-slate-200" />
+<Input
+  id="email"
+  type="email"
+  placeholder="contoh@sekolah.sch.id"
+  className="h-12 text-base rounded-xl border-slate-200"
+  value={formData.email}
+  onChange={(e) =>
+    setFormData({ ...formData, email: e.target.value })
+  }
+/>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="role" className="text-base font-semibold text-slate-700">Role</Label>
-              <Select>
-                <SelectTrigger className="h-12 text-base rounded-xl border-slate-200 text-slate-600">
-                  <SelectValue placeholder="Pilih Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin" className="py-3">Admin</SelectItem>
-                  <SelectItem value="guru" className="py-3">Guru Pembimbing</SelectItem>
-                  <SelectItem value="siswa" className="py-3">Siswa</SelectItem>
-                </SelectContent>
-              </Select>
+<Select
+  onValueChange={(value) =>
+    setFormData({ ...formData, role: value })
+  }
+>
+  <SelectTrigger className="h-12 text-base rounded-xl border-slate-200 text-slate-600">
+    <SelectValue placeholder="Pilih Role" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="admin">Admin</SelectItem>
+    <SelectItem value="guru">Guru Pembimbing</SelectItem>
+    <SelectItem value="siswa">Siswa</SelectItem>
+  </SelectContent>
+</Select>
+
             </div>
             <div className="grid grid-cols-2 gap-6">
                <div className="grid gap-2">
                  <Label htmlFor="password" className="text-base font-semibold text-slate-700">Password</Label>
-                 <Input id="password" type="password" className="h-12 text-base rounded-xl border-slate-200" />
+<Input
+  id="password"
+  type="password"
+  className="h-12 text-base rounded-xl border-slate-200"
+  value={formData.password}
+  onChange={(e) =>
+    setFormData({ ...formData, password: e.target.value })
+  }
+/>
                </div>
                <div className="grid gap-2">
                  <Label htmlFor="conf-password" className="text-base font-semibold text-slate-700">Konfirmasi Password</Label>
-                 <Input id="conf-password" type="password" className="h-12 text-base rounded-xl border-slate-200" />
+<Input
+  id="conf-password"
+  type="password"
+  className="h-12 text-base rounded-xl border-slate-200"
+  value={formData.confirmPassword}
+  onChange={(e) =>
+    setFormData({ ...formData, confirmPassword: e.target.value })
+  }
+/>
                </div>
             </div>
             <div className="flex items-center space-x-3 mt-2">
-                <Checkbox id="verified" className="h-5 w-5 rounded border-slate-300" />
+<Checkbox
+  id="verified"
+  checked={formData.verified}
+  onCheckedChange={(checked) =>
+    setFormData({ ...formData, verified: !!checked })
+  }
+/>
                 <Label htmlFor="verified" className="text-base font-medium text-slate-600 cursor-pointer">
                   Verifikasi email pengguna ini secara langsung?
                 </Label>
@@ -351,8 +497,13 @@ const fetchUsers = async () => {
           </div>
           <DialogFooter className="gap-3 sm:gap-0">
             <Button variant="outline" onClick={() => setIsAddOpen(false)} className="h-12 px-6 text-base rounded-xl font-semibold border-slate-200 text-slate-600 hover:bg-slate-50 mr-3">Batal</Button>
-            <Button className="bg-[#0EA5E9] hover:bg-[#0284C7] h-12 px-8 text-base rounded-xl font-bold shadow-md text-white">Simpan Data</Button>
-          </DialogFooter>
+            <Button
+              onClick={handleCreateUser}
+              className="bg-[#0EA5E9] hover:bg-[#0284C7] h-12 px-8 text-base rounded-xl font-bold shadow-md text-white"
+            >
+              Simpan Data
+            </Button>
+                      </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -399,7 +550,12 @@ const fetchUsers = async () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)} className="h-12 px-6 text-base rounded-xl font-semibold border-slate-200 text-slate-600 hover:bg-slate-50 mr-3">Batal</Button>
-            <Button className="bg-[#0EA5E9] hover:bg-[#0284C7] h-12 px-8 text-base rounded-xl font-bold shadow-md text-white">Simpan Perubahan</Button>
+<Button
+  onClick={handleUpdateUser}
+  className="bg-[#0EA5E9] hover:bg-[#0284C7] h-12 px-8 text-base rounded-xl font-bold shadow-md text-white"
+>
+  Simpan Perubahan
+</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -418,7 +574,12 @@ const fetchUsers = async () => {
           </DialogHeader>
           <DialogFooter className="sm:justify-center gap-3 mt-6">
             <Button variant="outline" onClick={() => setIsDeleteOpen(false)} className="w-full sm:w-auto h-12 text-base px-8 rounded-xl font-semibold border-slate-200">Tidak, Batalkan</Button>
-            <Button className="bg-red-600 hover:bg-red-700 w-full sm:w-auto h-12 text-base px-8 rounded-xl font-bold shadow-md text-white" onClick={() => setIsDeleteOpen(false)}>Ya, Hapus</Button>
+<Button
+  onClick={confirmDeleteUser}
+  className="bg-red-600 hover:bg-red-700 w-full sm:w-auto h-12 text-base px-8 rounded-xl font-bold shadow-md text-white"
+>
+  Ya, Hapus
+</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
