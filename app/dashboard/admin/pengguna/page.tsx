@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 import {
   Users,
   Plus,
@@ -54,13 +55,29 @@ export default function UserManagement() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
 
-  const users = [
-    { id: 1, name: "Admin Sistem", email: "admin@gmail.com", role: "Admin", verified: true, joined: "1 Jan 2024", avatar: "AS" },
-    { id: 2, name: "Pak Suryanto", email: "suryanto@teacher.com", role: "Guru", verified: true, joined: "2 Jan 2024", avatar: "PS" },
-    { id: 3, name: "Bu Kartika", email: "kartika@teacher.com", role: "Guru", verified: true, joined: "3 Jan 2024", avatar: "BK" },
-    { id: 4, name: "Ahmad Rizki", email: "ahmad.rizki@email.com", role: "Siswa", verified: true, joined: "4 Jan 2024", avatar: "AR" },
-    { id: 5, name: "Siti Nurhaliza", email: "siti.nur@email.com", role: "Siswa", verified: true, joined: "5 Jan 2024", avatar: "SN" },
-  ]
+  const [users, setUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+useEffect(() => {
+  fetchUsers()
+}, [])
+
+const fetchUsers = async () => {
+  setLoading(true)
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("Error fetch users:", error)
+  } else {
+    setUsers(data || [])
+  }
+
+  setLoading(false)
+}
+
 
   const handleEdit = (user: any) => {
     setSelectedUser(user)
@@ -175,64 +192,89 @@ export default function UserManagement() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {users.map((user) => (
-                           <TableRow key={user.id} className="group border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                             <TableCell className="pl-0 py-6 align-top">
-                               <div className="flex items-start gap-4">
-                                 <Avatar className="h-12 w-12 rounded-full bg-[#0093E9] text-white">
-                                   <AvatarFallback className="bg-[#0093E9] text-white font-bold text-sm">{user.avatar}</AvatarFallback>
-                                 </Avatar>
-                                 <div className="flex flex-col pt-1">
-                                   <p className="font-bold text-slate-800 text-base">{user.name}</p>
-                                   <p className="text-xs text-slate-400 font-medium mt-1">ID: {user.id}</p>
-                                 </div>
-                               </div>
-                             </TableCell>
-
-                             <TableCell className="py-6 align-top">
-                               <div className="flex flex-col gap-2 pt-1">
-                                 <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
-                                    <Mail size={16} className="text-slate-400" /> {user.email}
-                                 </div>
-                                 {user.verified && (
-                                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 w-fit">
-                                      <CheckCircle2 size={12} className="text-green-600" strokeWidth={3} />
-                                      <span className="text-xs font-bold text-green-600">Verified</span>
-                                   </div>
-                                 )}
-                               </div>
-                             </TableCell>
-
-                             <TableCell className="text-center py-6 align-top pt-8">
-                               <Badge className={`border-none px-4 py-1.5 text-xs font-bold shadow-none rounded-lg capitalize min-w-[90px] justify-center inline-flex items-center gap-2 ${
-                                  user.role === 'Admin' ? "bg-purple-100 text-purple-600 hover:bg-purple-100" :
-                                  user.role === 'Guru' ? "bg-blue-100 text-blue-600 hover:bg-blue-100" :
-                                  "bg-cyan-100 text-cyan-600 hover:bg-cyan-100"
-                               }`}>
-                                  {user.role === 'Admin' && <Shield size={12} />}
-                                  {user.role === 'Guru' && <GraduationCap size={12} />}
-                                  {user.role === 'Siswa' && <User size={12} />}
-                                  {user.role}
-                               </Badge>
-                             </TableCell>
-
-                             <TableCell className="text-center py-6 align-top pt-8">
-                                <span className="text-sm font-medium text-slate-600">{user.joined}</span>
-                             </TableCell>
-
-                             <TableCell className="pr-0 text-center py-6 align-top pt-7">
-                                <div className="flex items-center justify-center gap-2">
-                                    <Button onClick={() => handleEdit(user)} variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
-                                      <Pencil size={18} strokeWidth={2} />
-                                    </Button>
-                                    <Button onClick={() => handleDelete(user)} variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
-                                      <Trash2 size={18} strokeWidth={2} />
-                                    </Button>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8">
+                            Loading data...
+                          </TableCell>
+                        </TableRow>
+                      ) : users.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8">
+                            Tidak ada user
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        users.map((user) => (
+                          <TableRow key={user.id} className="border-b border-slate-50">
+                            
+                            <TableCell className="pl-0 py-6">
+                              <div className="flex items-center gap-4">
+                                <Avatar className="h-12 w-12 bg-[#0093E9] text-white">
+                                  <AvatarFallback>
+                                    {user.name
+                                      ?.split(" ")
+                                      .map((n: string) => n[0])
+                                      .join("")
+                                      .substring(0, 2)
+                                      .toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-bold">{user.name}</p>
+                                  <p className="text-xs text-slate-400">ID: {user.id}</p>
                                 </div>
-                             </TableCell>
-                           </TableRow>
-                        ))}
-                    </TableBody>
+                              </div>
+                            </TableCell>
+
+                            <TableCell className="py-6">
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Mail size={16} /> {user.email}
+                                </div>
+                                {user.verified && (
+                                  <div className="flex items-center gap-1 px-2 py-1 bg-green-50 rounded">
+                                    <CheckCircle2 size={12} className="text-green-600" />
+                                    <span className="text-xs text-green-600 font-bold">
+                                      Verified
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+
+                            <TableCell className="text-center py-6">
+                              <Badge className={`capitalize ${
+                                user.role === "admin"
+                                  ? "bg-purple-100 text-purple-600"
+                                  : user.role === "guru"
+                                  ? "bg-blue-100 text-blue-600"
+                                  : "bg-cyan-100 text-cyan-600"
+                              }`}>
+                                {user.role}
+                              </Badge>
+                            </TableCell>
+
+                            <TableCell className="text-center py-6">
+                              {new Date(user.created_at).toLocaleDateString("id-ID")}
+                            </TableCell>
+
+                            <TableCell className="text-center py-6">
+                              <div className="flex justify-center gap-2">
+                                <Button size="icon" variant="ghost">
+                                  <Pencil size={18} />
+                                </Button>
+                                <Button size="icon" variant="ghost">
+                                  <Trash2 size={18} />
+                                </Button>
+                              </div>
+                            </TableCell>
+
+                          </TableRow>
+                        ))
+                      )}
+                      </TableBody>
+
                     </Table>
                 </div>
 

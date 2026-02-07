@@ -22,8 +22,10 @@ type Dudi = {
   email: string
   telepon: string
   penanggung_jawab: string
-  status: "aktif" | "nonaktif" 
+  status: "aktif" | "nonaktif"
+  total_siswa_magang: number
 }
+
 
 export default function DudiManagement() {
   const [dudiList, setDudiList] = useState<Dudi[]>([])
@@ -91,7 +93,17 @@ export default function DudiManagement() {
           {/* Perbaikan: status === "nonaktif" sesuai database */}
           <StatCardDudi title="DUDI Tidak Aktif" value={dudiList.filter(d => d.status === "nonaktif").length} desc="Perusahaan tidak aktif" icon={<XCircle className="text-[#DC2626]" size={28} />} />
           
-          <StatCardDudi title="Total Siswa Magang" value={0} desc="Siswa magang aktif" icon={<Users className="text-[#0EA5E9]" size={28} />} />
+          <StatCardDudi 
+            title="Total Siswa Magang" 
+            value={
+              dudiList.reduce(
+                (total, d) => total + (d.total_siswa_magang || 0),
+                0
+              )
+            }
+            desc="Siswa magang aktif" 
+            icon={<Users className="text-[#0EA5E9]" size={28} />}
+          />
         </div>
 
         {/* Daftar DUDI */}
@@ -145,18 +157,19 @@ export default function DudiManagement() {
                       <TableCell colSpan={6} className="text-center py-6 text-slate-500">Tidak ada data</TableCell>
                     </TableRow>
                   ) : (
-                    filteredDudi.map(d => (
-                      <DudiRow
-                        id={d.id}
-                        nama_perusahaan={d.nama_perusahaan}
-                        alamat={d.alamat}
-                        email={d.email}
-                        telepon={d.telepon}
-                        penanggung_jawab={d.penanggung_jawab}
-                        status={d.status}
-                        count={0} // nanti bisa hitung siswa magang
-                      />
-                    ))
+filteredDudi.map(d => (
+  <DudiRow
+    id={d.id}
+    nama_perusahaan={d.nama_perusahaan}
+    alamat={d.alamat}
+    email={d.email}
+    telepon={d.telepon}
+    penanggung_jawab={d.penanggung_jawab}
+    status={d.status}
+    total_siswa_magang={d.total_siswa_magang}
+  />
+))
+
                   )}
                 </TableBody>
               </Table>
@@ -186,7 +199,7 @@ function StatCardDudi({ title, value, desc, icon }: any) {
   )
 }
 
-function DudiRow({ nama_perusahaan, alamat, email, telepon, penanggung_jawab, status, count }: Dudi & { count: number }) {
+function DudiRow({ nama_perusahaan, alamat, email, telepon, penanggung_jawab, status, total_siswa_magang }: Dudi & { total_siswa_magang: number }) {
   const isAktif = status === "aktif"
   const initials = penanggung_jawab
     ? penanggung_jawab.split(' ').map(n => n[0]).join('').substring(0, 2)
@@ -229,7 +242,7 @@ function DudiRow({ nama_perusahaan, alamat, email, telepon, penanggung_jawab, st
         }`}>{status}</Badge>
       </TableCell>
       <TableCell className="text-center">
-        <div className="w-8 h-8 rounded-lg bg-[#84cc16] hover:bg-[#65a30d] text-white flex items-center justify-center mx-auto text-xs font-bold">{count}</div>
+        <div className="w-8 h-8 rounded-lg bg-[#84cc16] hover:bg-[#65a30d] text-white flex items-center justify-center mx-auto text-xs font-bold">{total_siswa_magang}</div>
       </TableCell>
       <TableCell className="pr-6 text-center">
         <div className="flex items-center justify-center gap-2">
