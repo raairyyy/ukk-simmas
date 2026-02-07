@@ -60,25 +60,36 @@ export default function UserManagement() {
     setLoading(false)
   }
 
-  const handleSaveAdd = async () => {
-    if (formData.password !== formData.confirmPassword) return alert("Password tidak cocok!")
-    
-    const { error } = await supabase.from("users").insert([{
-      name: formData.name,
-      email: formData.email,
-      role: formData.role,
-      password: formData.password,
-      email_verified_at: formData.verified ? new Date().toISOString() : null
-    }])
+const handleSaveAdd = async () => {
+  if (formData.password !== formData.confirmPassword) return alert("Password tidak cocok!");
 
-    if (!error) {
-      setIsAddOpen(false)
-      fetchUsers()
-      resetForm()
+  try {
+    // Panggil API Route yang baru dibuat
+    const res = await fetch("/api/pengguna", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        password: formData.password, // Password asli dikirim lewat jalur aman HTTPS
+        verified: formData.verified
+      }),
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      setIsAddOpen(false);
+      fetchUsers(); // Refresh tabel
+      resetForm();
     } else {
-      alert(error.message)
+      alert(result.error);
     }
+  } catch (err) {
+    console.error("Error pendaftaran:", err);
   }
+};
 
   const handleSaveEdit = async () => {
     const { error } = await supabase
