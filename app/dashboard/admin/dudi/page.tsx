@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import {
   Building2, Users, Plus, Search, Pencil, Trash2,
-  CheckCircle2, XCircle, User, Mail, Phone,
+  CheckCircle2, XCircle, User, Mail, Phone,RotateCcw,
   ChevronLeft, ChevronRight
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -24,6 +24,7 @@ type Dudi = {
   penanggung_jawab: string
   status: "aktif" | "nonaktif"
   total_siswa_magang: number
+  is_deleted: boolean   // ✅ tambahkan ini
 }
 
 
@@ -52,12 +53,55 @@ export default function DudiManagement() {
     }
   }
 
+const handleSubmit = async () => {
+
+  if (
+    !formData.nama_perusahaan ||
+    !formData.alamat ||
+    !formData.telepon ||
+    !formData.email ||
+    !formData.penanggung_jawab
+  ) {
+    alert("Semua field wajib diisi")
+    return
+  }
+
+  const res = await fetch("/api/dudi", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(formData)
+  })
+
+  const json = await res.json()
+
+  if (res.ok) {
+    alert("DUDI berhasil ditambahkan")
+    setIsOpen(false)
+    fetchDudi()
+  } else {
+    alert(json.error)
+  }
+}
+
+
+
   // Filter hasil search
   const filteredDudi = dudiList.filter(d =>
     d.nama_perusahaan.toLowerCase().includes(search.toLowerCase()) ||
     d.alamat.toLowerCase().includes(search.toLowerCase()) ||
     d.penanggung_jawab.toLowerCase().includes(search.toLowerCase())
   )
+  
+  //Modal Tambah DUDI
+  const [isOpen, setIsOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    nama_perusahaan: "",
+    alamat: "",
+    telepon: "",
+    email: "",
+    penanggung_jawab: "",
+    status: "aktif"
+  })
 
   return (
     <>
@@ -79,7 +123,7 @@ export default function DudiManagement() {
       </header>
 
       {/* Body */}
-      <div className="p-10 max-w-[1680px] mx-auto space-y-8">
+      <div className="p-8 xl:p-10 max-w-[1400px] mx-auto space-y-10">
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Manajemen DUDI</h1>
 
         {/* Grid */}
@@ -116,9 +160,10 @@ export default function DudiManagement() {
                 </div>
                 <h3 className="text-2xl font-bold text-slate-800">Daftar DUDI</h3>
               </div>
-              <Button className="bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-xl px-8 py-7 font-bold text-base shadow-lg shadow-blue-200/50 transition-all hover:scale-105">
+              <Button onClick={() => setIsOpen(true)} className="bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-xl px-8 py-7 font-bold text-base shadow-lg shadow-blue-200/50 transition-all hover:scale-105" >
                 <Plus className="mr-2 h-6 w-6" strokeWidth={3} /> Tambah DUDI
               </Button>
+              
             </div>
 
             {/* Search */}
@@ -138,7 +183,7 @@ export default function DudiManagement() {
             <div className="rounded-2xl border border-slate-100 overflow-hidden">
               <Table>
                 <TableHeader className="bg-[#F8FAFC]">
-                  <TableRow>
+                  <TableRow className="hover:bg-slate-50 transition">
                     <TableHead className="py-6 pl-6 font-bold text-slate-600 text-sm uppercase tracking-wide">Perusahaan</TableHead>
                     <TableHead className="py-6 font-bold text-slate-600 text-sm uppercase tracking-wide">Kontak</TableHead>
                     <TableHead className="py-6 font-bold text-slate-600 text-sm uppercase tracking-wide">Penanggung Jawab</TableHead>
@@ -157,18 +202,20 @@ export default function DudiManagement() {
                       <TableCell colSpan={6} className="text-center py-6 text-slate-500">Tidak ada data</TableCell>
                     </TableRow>
                   ) : (
-filteredDudi.map(d => (
-  <DudiRow
-    id={d.id}
-    nama_perusahaan={d.nama_perusahaan}
-    alamat={d.alamat}
-    email={d.email}
-    telepon={d.telepon}
-    penanggung_jawab={d.penanggung_jawab}
-    status={d.status}
-    total_siswa_magang={d.total_siswa_magang}
-  />
-))
+                    filteredDudi.map(d => (
+                      <DudiRow
+                        id={d.id}
+                        nama_perusahaan={d.nama_perusahaan}
+                        alamat={d.alamat}
+                        email={d.email}
+                        telepon={d.telepon}
+                        penanggung_jawab={d.penanggung_jawab}
+                        status={d.status}
+                        total_siswa_magang={d.total_siswa_magang}
+                        is_deleted={d.is_deleted}   // ✅ tambahkan ini
+                      />
+                    ))
+
 
                   )}
                 </TableBody>
@@ -177,6 +224,58 @@ filteredDudi.map(d => (
           </div>
         </Card>
       </div>
+        {isOpen && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white w-[500px] p-8 rounded-2xl space-y-4">
+              <h2 className="text-xl font-bold">Tambah DUDI Baru</h2>
+
+              <Input
+                placeholder="Nama Perusahaan"
+                value={formData.nama_perusahaan}
+                onChange={e => setFormData({...formData, nama_perusahaan: e.target.value})}
+              />
+
+              <Input
+                placeholder="Alamat"
+                value={formData.alamat}
+                onChange={e => setFormData({...formData, alamat: e.target.value})}
+              />
+
+              <Input
+                placeholder="Telepon"
+                value={formData.telepon}
+                onChange={e => setFormData({...formData, telepon: e.target.value})}
+              />
+
+              <Input
+                placeholder="Email"
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
+              />
+
+              <Input
+                placeholder="Penanggung Jawab"
+                value={formData.penanggung_jawab}
+                onChange={e => setFormData({...formData, penanggung_jawab: e.target.value})}
+              />
+
+              <select
+                className="w-full border p-2 rounded"
+                value={formData.status}
+                onChange={e => setFormData({...formData, status: e.target.value})}
+              >
+                <option value="aktif">Aktif</option>
+                <option value="nonaktif">Tidak Aktif</option>
+              </select>
+
+              <div className="flex justify-end gap-3">
+                <Button variant="ghost" onClick={() => setIsOpen(false)}>Batal</Button>
+                <Button onClick={handleSubmit}>Simpan</Button>
+              </div>
+            </div>
+          </div>
+        )}
+
     </>
   )
 }
@@ -199,11 +298,15 @@ function StatCardDudi({ title, value, desc, icon }: any) {
   )
 }
 
-function DudiRow({ nama_perusahaan, alamat, email, telepon, penanggung_jawab, status, total_siswa_magang }: Dudi & { total_siswa_magang: number }) {
+function DudiRow({ nama_perusahaan, alamat, email, telepon, penanggung_jawab, status, total_siswa_magang,id, is_deleted }: Dudi & { total_siswa_magang: number }) {
   const isAktif = status === "aktif"
   const initials = penanggung_jawab
     ? penanggung_jawab.split(' ').map(n => n[0]).join('').substring(0, 2)
     : "NA" // fallback kalau null/undefined
+
+  function fetchDudi() {
+    throw new Error("Function not implemented.")
+  }
 
   return (
     <TableRow className="group hover:bg-slate-50/80 border-slate-100 transition-colors">
@@ -237,9 +340,16 @@ function DudiRow({ nama_perusahaan, alamat, email, telepon, penanggung_jawab, st
         </div>
       </TableCell>
       <TableCell className="text-center">
-        <Badge className={`border-none px-4 py-1.5 text-xs font-bold rounded-lg ${
-          isAktif ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-        }`}>{status}</Badge>
+      <Badge
+        className={`text-xs px-3 py-1 rounded-full font-semibold ${
+          isAktif
+            ? "bg-green-100 text-green-600"
+            : "bg-red-100 text-red-600"
+        }`}
+      >
+        {isAktif ? "Aktif" : "Nonaktif"}
+      </Badge>
+
       </TableCell>
       <TableCell className="text-center">
         <div className="w-8 h-8 rounded-lg bg-[#84cc16] hover:bg-[#65a30d] text-white flex items-center justify-center mx-auto text-xs font-bold">{total_siswa_magang}</div>
@@ -249,9 +359,34 @@ function DudiRow({ nama_perusahaan, alamat, email, telepon, penanggung_jawab, st
           <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
             <Pencil size={18} strokeWidth={2.5} />
           </Button>
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
-            <Trash2 size={18} strokeWidth={2.5} />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={async () => {
+                const confirmDelete = confirm(
+                  is_deleted
+                    ? "Pulihkan data ini?"
+                    : "Yakin ingin menghapus data ini?"
+                )
+
+                if (!confirmDelete) return
+
+                await fetch("/api/dudi", {
+                  method: "DELETE",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ id, restore: is_deleted })
+                })
+
+                fetchDudi()
+              }}
+            >
+              {is_deleted ? (
+                <RotateCcw size={18} />
+              ) : (
+                <Trash2 size={18} />
+              )}
+            </Button>
+
         </div>
       </TableCell>
     </TableRow>
