@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import {
   Building2, Users, Plus, Search, Pencil, Trash2,
   CheckCircle2, XCircle, User, Mail, Phone,RotateCcw,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight,
+  Bell
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -32,7 +33,8 @@ export default function DudiManagement() {
   const [dudiList, setDudiList] = useState<Dudi[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
-
+  const [showToast, setShowToast] = useState(false); // State untuk menampilkan notifikasi
+  const [toastMessage, setToastMessage] = useState(""); // Pesan notifikasi
   useEffect(() => {
     fetchDudi()
   }, [])
@@ -74,11 +76,24 @@ const handleSubmit = async () => {
 
   const json = await res.json()
 
-  if (res.ok) {
-    alert("DUDI berhasil ditambahkan")
+if (res.ok) {
+    // 1. Tutup Modal
     setIsOpen(false)
+    // 2. Reset Form
+    setFormData({ nama_perusahaan: "", alamat: "", telepon: "", email: "", penanggung_jawab: "", status: "aktif" })
+    // 3. Refresh Data
     fetchDudi()
+    
+    // 4. Tampilkan Notifikasi Kustom
+    setToastMessage("Data DUDI berhasil ditambahkan")
+    setShowToast(true)
+    
+    // 5. Hilangkan otomatis setelah 3 detik
+    setTimeout(() => {
+      setShowToast(false)
+    }, 3000)
   } else {
+    const json = await res.json()
     alert(json.error)
   }
 }
@@ -105,23 +120,59 @@ const handleSubmit = async () => {
 
   return (
     <>
+    {/* NOTIFIKASI TOAST KUSTOM (POJOK KANAN ATAS) */}
+    {showToast && (
+      <div className="fixed top-6 right-6 z-[200] animate-in slide-in-from-right duration-300">
+        <div className="bg-[#84cc16] text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 border border-white/20 min-w-[300px]">
+          {/* Ikon Centang (CheckCircle2) */}
+          <div className="bg-white/20 p-1.5 rounded-full flex items-center justify-center">
+            <CheckCircle2 size={20} strokeWidth={3} />
+          </div>
+          
+          <p className="font-bold text-sm tracking-wide flex-1">
+            {toastMessage}
+          </p>
+          
+          {/* Tombol Close (X) */}
+          <button 
+            onClick={() => setShowToast(false)} 
+            className="p-1 hover:bg-white/10 rounded-lg transition-colors ml-2"
+          >
+            <XCircle size={20} className="opacity-80" />
+          </button>
+        </div>
+      </div>
+    )}
       {/* Header */}
       <header className="bg-white border-b border-slate-100 h-[90px] px-10 flex items-center justify-between sticky top-0 z-10">
         <div>
           <h2 className="font-bold text-xl text-slate-800">SMK Brantas Karangkates</h2>
           <p className="text-sm text-slate-500 mt-1 font-medium">Sistem Manajemen Magang Siswa</p>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="text-right hidden sm:block">
-            <p className="text-base font-bold text-slate-800">Admin Sistem</p>
-            <p className="text-sm text-slate-500 font-medium">Admin</p>
+
+        <div className="flex items-center gap-8">
+          {/* Ikon Lonceng Notifikasi */}
+          <button className="text-slate-400 hover:text-slate-600 transition-colors relative">
+            <Bell size={24} strokeWidth={1.5} />
+            {/* Dot indikator jika ada notifikasi baru (Opsional) */}
+            <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+          </button>
+
+          {/* Profil Section */}
+          <div className="flex items-center gap-4">
+            {/* Avatar Kotak Tumpul sesuai Gambar */}
+            <div className="w-12 h-12 bg-[#00A9D8] rounded-[14px] flex items-center justify-center text-white shadow-sm cursor-pointer hover:bg-[#0092ba] transition-colors">
+              <User size={26} strokeWidth={2.5} />
+            </div>
+
+            {/* Info Teks Admin */}
+            <div className="text-left hidden sm:block">
+              <p className="text-[17px] font-bold text-[#1E293B] leading-none">Admin Sistem</p>
+              <p className="text-sm text-slate-400 font-semibold mt-1.5">Admin</p>
+            </div>
           </div>
-          <Avatar className="h-12 w-12 bg-[#0EA5E9] text-white ring-4 ring-slate-50 cursor-pointer">
-            <AvatarFallback className="bg-[#0EA5E9] text-white"><User size={24} /></AvatarFallback>
-          </Avatar>
         </div>
       </header>
-
       {/* Body */}
       <div className="p-8 xl:p-10 max-w-[1400px] mx-auto space-y-10">
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Manajemen DUDI</h1>
@@ -225,53 +276,114 @@ const handleSubmit = async () => {
           </div>
         </Card>
       </div>
+        /* MODAL TAMBAH DUDI (SESUAI GAMBAR) */
         {isOpen && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white w-[500px] p-8 rounded-2xl space-y-4">
-              <h2 className="text-xl font-bold">Tambah DUDI Baru</h2>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+            <div className="bg-white w-full max-w-[500px] rounded-[24px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+              <div className="p-8 space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Tambah DUDI Baru</h2>
+                  <p className="text-slate-500 text-sm font-medium mt-1">Lengkapi semua informasi yang diperlukan</p>
+                </div>
 
-              <Input
-                placeholder="Nama Perusahaan"
-                value={formData.nama_perusahaan}
-                onChange={e => setFormData({...formData, nama_perusahaan: e.target.value})}
-              />
+                <div className="space-y-5">
+                  {/* Nama Perusahaan */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      Nama Perusahaan <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="Masukkan nama perusahaan"
+                      className="h-12 rounded-xl border-slate-200 focus:ring-blue-500 bg-slate-50/30"
+                      value={formData.nama_perusahaan}
+                      onChange={e => setFormData({...formData, nama_perusahaan: e.target.value})}
+                    />
+                  </div>
 
-              <Input
-                placeholder="Alamat"
-                value={formData.alamat}
-                onChange={e => setFormData({...formData, alamat: e.target.value})}
-              />
+                  {/* Alamat */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      Alamat <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="Masukkan alamat lengkap"
+                      className="h-12 rounded-xl border-slate-200 focus:ring-blue-500 bg-slate-50/30"
+                      value={formData.alamat}
+                      onChange={e => setFormData({...formData, alamat: e.target.value})}
+                    />
+                  </div>
 
-              <Input
-                placeholder="Telepon"
-                value={formData.telepon}
-                onChange={e => setFormData({...formData, telepon: e.target.value})}
-              />
+                  {/* Telepon */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      Telepon <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="Contoh: 021-12345678"
+                      className="h-12 rounded-xl border-slate-200 focus:ring-blue-500 bg-slate-50/30"
+                      value={formData.telepon}
+                      onChange={e => setFormData({...formData, telepon: e.target.value})}
+                    />
+                  </div>
 
-              <Input
-                placeholder="Email"
-                value={formData.email}
-                onChange={e => setFormData({...formData, email: e.target.value})}
-              />
+                  {/* Email */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="Contoh: info@perusahaan.com"
+                      className="h-12 rounded-xl border-slate-200 focus:ring-blue-500 bg-slate-50/30"
+                      value={formData.email}
+                      onChange={e => setFormData({...formData, email: e.target.value})}
+                    />
+                  </div>
 
-              <Input
-                placeholder="Penanggung Jawab"
-                value={formData.penanggung_jawab}
-                onChange={e => setFormData({...formData, penanggung_jawab: e.target.value})}
-              />
+                  {/* Penanggung Jawab */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      Penanggung Jawab <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      placeholder="Nama penanggung jawab"
+                      className="h-12 rounded-xl border-slate-200 focus:ring-blue-500 bg-slate-50/30"
+                      value={formData.penanggung_jawab}
+                      onChange={e => setFormData({...formData, penanggung_jawab: e.target.value})}
+                    />
+                  </div>
 
-              <select
-                className="w-full border p-2 rounded"
-                value={formData.status}
-                onChange={e => setFormData({...formData, status: e.target.value})}
-              >
-                <option value="aktif">Aktif</option>
-                <option value="nonaktif">Tidak Aktif</option>
-              </select>
+                  {/* Status */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-1">
+                      Status <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      className="w-full h-12 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white font-medium"
+                      value={formData.status}
+                      onChange={e => setFormData({...formData, status: e.target.value as "aktif" | "nonaktif"})}
+                    >
+                      <option value="aktif">Aktif</option>
+                      <option value="nonaktif">Tidak Aktif</option>
+                    </select>
+                  </div>
+                </div>
 
-              <div className="flex justify-end gap-3">
-                <Button variant="ghost" onClick={() => setIsOpen(false)}>Batal</Button>
-                <Button onClick={handleSubmit}>Simpan</Button>
+                {/* Action Buttons */}
+                <div className="flex gap-4 pt-4">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 h-12 rounded-xl font-bold text-slate-600 border-slate-200 hover:bg-slate-50"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Batal
+                  </Button>
+                  <Button 
+                    className="flex-1 h-12 rounded-xl font-bold bg-[#CBD5E1] hover:bg-slate-400 text-slate-700 transition-all shadow-md shadow-slate-200"
+                    onClick={handleSubmit}
+                  >
+                    Simpan
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -392,4 +504,5 @@ function DudiRow({ nama_perusahaan, alamat, email, telepon, penanggung_jawab, st
       </TableCell>
     </TableRow>
   )
+  
 }

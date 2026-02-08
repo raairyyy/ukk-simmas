@@ -14,7 +14,7 @@ export default function DashboardLayout({
       <Sidebar />
       
       {/* Konten Utama */}
-      <main className="flex-1 md:ml-[280px] min-w-0">
+      <main className="flex-1 md:ml-[320px] min-w-0">
         {children}
       </main>
       
