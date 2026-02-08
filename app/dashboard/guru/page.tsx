@@ -1,47 +1,67 @@
 "use client"
-
 import { useEffect, useState } from "react"
-import { Users, Building2, GraduationCap, BookOpen, User } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Users, Building2, GraduationCap, BookOpen, User, LogOut } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export default function GuruDashboard() {
-  const [stats, setStats] = useState({ totalSiswa: 0, dudi: 0, aktif: 0, logbook: 0 })
-  const [loading, setLoading] = useState(true)
+  const [userData, setUserData] = useState<any>(null)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  
+  // FIX: Tambahkan state stats agar tidak error "Cannot find name 'stats'"
+  const [stats, setStats] = useState({
+    totalSiswa: 0,
+    dudi: 0,
+    aktif: 0,
+    logbook: 0
+  })
 
   useEffect(() => {
-    // Fungsi untuk mengambil stats dari API atau langsung Supabase
-    const fetchStats = async () => {
-      try {
-        const res = await fetch("/api/guru/dashboard-stats") // Anda perlu buat API ini
-        const data = await res.json()
-        if (res.ok) setStats(data)
-      } catch (error) {
-        console.error(error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchStats()
+    // Ambil data profil
+    fetch("/api/auth/me")
+      .then(res => res.json())
+      .then(data => setUserData(data.user))
+
+    // Ambil data statistik (Pastikan API ini sudah dibuat)
+    fetch("/api/guru/dashboard-stats")
+      .then(res => res.json())
+      .then(data => {
+        if (data) setStats(data)
+      })
+      .catch(err => console.error("Error fetching stats:", err))
   }, [])
 
+  const handleLogout = async () => {
+    const res = await fetch("/api/auth/logout", { method: "POST" })
+    if (res.ok) window.location.href = "/login"
+  }
+
   return (
-    <>
-      <header className="bg-white border-b border-slate-100 h-[90px] px-10 flex items-center justify-between sticky top-0 z-10">
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b h-[90px] px-10 flex items-center justify-between sticky top-0 z-50">
         <div>
-          <h2 className="font-bold text-xl text-slate-800">Panel Guru</h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium">SMK Brantas Karangkates</p>
+          <h2 className="font-bold text-xl text-slate-800">SMK Brantas</h2>
+          <p className="text-sm text-slate-500">Panel Guru Pembimbing</p>
         </div>
         <div className="flex items-center gap-6">
           <div className="text-right hidden sm:block">
-            <p className="text-base font-bold text-slate-800">Guru Pembimbing</p>
-            <p className="text-sm text-slate-500 font-medium">Guru</p>
+            <p className="text-base font-bold text-slate-800">{userData?.name || "Guru"}</p>
+            <p className="text-sm text-slate-500">Guru Pembimbing</p>
           </div>
-          <Avatar className="h-12 w-12 bg-[#06b6d4] text-white ring-4 ring-slate-50">
-            <AvatarFallback className="bg-[#06b6d4] text-white font-bold">
-              <User size={24} />
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <div onClick={() => setIsProfileOpen(!isProfileOpen)} className="cursor-pointer">
+              <Avatar className="h-12 w-12 bg-[#06b6d4] text-white ring-4 ring-slate-50">
+                <AvatarFallback className="font-bold"><User size={24} /></AvatarFallback>
+              </Avatar>
+            </div>
+            {isProfileOpen && (
+              <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl border p-2 animate-in fade-in zoom-in">
+                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg font-bold text-sm">
+                  <LogOut size={18} /> Keluar
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -49,13 +69,33 @@ export default function GuruDashboard() {
         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Guru</h1>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
-          <StatCard title="Siswa Anda" value={stats.totalSiswa} desc="Siswa yang Anda bimbing" icon={<Users className="text-[#06b6d4]" />} />
-          <StatCard title="DUDI Aktif" value={stats.dudi} desc="Mitra industri" icon={<Building2 className="text-[#06b6d4]" />} />
-          {/* ... dst */}
+          <StatCard 
+            title="Siswa Anda" 
+            value={stats.totalSiswa} 
+            desc="Siswa yang Anda bimbing" 
+            icon={<Users className="text-[#06b6d4]" />} 
+          />
+          <StatCard 
+            title="DUDI Aktif" 
+            value={stats.dudi} 
+            desc="Mitra industri" 
+            icon={<Building2 className="text-[#06b6d4]" />} 
+          />
+          <StatCard 
+            title="Sedang Magang" 
+            value={stats.aktif} 
+            desc="Siswa aktif di lapangan" 
+            icon={<GraduationCap className="text-[#06b6d4]" />} 
+          />
+          <StatCard 
+            title="Logbook Baru" 
+            value={stats.logbook} 
+            desc="Laporan perlu diperiksa" 
+            icon={<BookOpen className="text-[#06b6d4]" />} 
+          />
         </div>
-        {/* ... List magang terbaru */}
       </div>
-    </>
+    </div>
   )
 }
 

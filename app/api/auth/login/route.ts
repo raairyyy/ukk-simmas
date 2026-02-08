@@ -38,24 +38,26 @@ export async function POST(req: Request) {
     }
 
     // 3. Buat JWT Token dengan menyertakan role dari database
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role, // Role diambil dinamis dari kolom 'role' di tabel
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: "7d" }
-    )
+// Di dalam POST app/api/auth/login/route.ts
+      const token = jwt.sign(
+        { 
+          id: user.id, 
+          email: user.email, 
+          role: user.role, // Pastikan ini dikirim (admin/guru/siswa)
+          name: user.name  // Tambahkan name agar tidak perlu hit API berkali-kali
+        }, 
+        process.env.JWT_SECRET!,
+        { expiresIn: "7d" }
+      )
 
-    // 4. Simpan Token ke Cookie
-    cookies().set("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    })
+      // Simpan Cookie
+      cookies().set("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/", // SANGAT PENTING: Path harus root agar terbaca di semua folder
+        maxAge: 60 * 60 * 24 * 7,
+      })
 
     // Kirim response sukses balik ke frontend
     return NextResponse.json({

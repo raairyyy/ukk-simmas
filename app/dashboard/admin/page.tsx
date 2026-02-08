@@ -1,36 +1,107 @@
 "use client"
 
+import { useState } from "react" // <-- Tambahkan ini
 import {
-  Building2,
-  Users,
-  GraduationCap,
-  BookOpen,
-  CalendarDays,
-  User,
-  MapPin,  // <-- Ditambahkan
-  Phone,   // <-- Ditambahkan
+  Building2, Users, GraduationCap, BookOpen, 
+  CalendarDays, User, MapPin, Phone, Bell, LogOut // <-- Tambahkan LogOut
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export default function AdminDashboard() {
+  // State untuk mengontrol dropdown logout
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+
+  // Fungsi Logout
+// Di dalam komponen AdminDashboard
+const handleLogout = async () => {
+  try {
+    // Memanggil API yang benar (Pastikan file sudah dipindah ke folder api)
+    const res = await fetch("/api/auth/logout", { 
+      method: "POST",
+    })
+    
+    if (res.ok) {
+      // Membersihkan semua data di storage browser (opsional tapi bagus)
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Navigasi paksa agar middleware Next.js mendeteksi cookie sudah kosong
+      window.location.href = "/login"
+    } else {
+      const errorData = await res.json()
+      console.error("Logout detail:", errorData)
+      alert("Gagal logout, silakan coba lagi.")
+    }
+  } catch (error) {
+    console.error("Logout error:", error)
+    alert("Terjadi kesalahan jaringan.")
+  }
+}
+
   return (
     <>
       {/* Header */}
-      <header className="bg-white border-b border-slate-100 h-[88px] px-10 flex items-center justify-between sticky top-0 z-10">
+      <header className="bg-white border-b border-slate-100 h-[88px] px-10 flex items-center justify-between sticky top-0 z-50">
         <div>
           <h2 className="font-bold text-lg text-slate-800">SMK Brantas Karangkates</h2>
           <p className="text-xs text-slate-500 mt-1 font-medium">Sistem Manajemen Magang Siswa</p>
         </div>
-        <div className="flex items-center gap-5">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-slate-800">Admin Sistem</p>
-            <p className="text-xs text-slate-500 font-medium">Admin</p>
+
+        <div className="flex items-center gap-8">
+          {/* Ikon Lonceng Notifikasi */}
+          <button className="text-slate-400 hover:text-slate-600 transition-colors relative">
+            <Bell size={24} strokeWidth={1.5} />
+            <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+          </button>
+
+          {/* Profil Section dengan Dropdown Logout (Gambar 7) */}
+          <div className="relative">
+            <div 
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center gap-4 cursor-pointer group"
+            >
+              {/* Avatar Kotak Tumpul */}
+              <div className="w-12 h-12 bg-[#00A9D8] rounded-[14px] flex items-center justify-center text-white shadow-sm transition-transform group-hover:scale-105">
+                <User size={26} strokeWidth={2.5} />
+              </div>
+
+              {/* Info Teks Admin */}
+              <div className="text-left hidden sm:block">
+                <p className="text-[16px] font-bold text-[#1E293B] leading-none">Admin Sistem</p>
+                <p className="text-xs text-slate-400 font-semibold mt-1.5 tracking-wide uppercase">Admin</p>
+              </div>
+            </div>
+
+            {/* Dropdown Menu Logout (Gambar 7) */}
+            {isProfileOpen && (
+              <>
+                {/* Overlay transparan untuk menutup dropdown saat klik di luar */}
+                <div 
+                  className="fixed inset-0 z-[-1]" 
+                  onClick={() => setIsProfileOpen(false)}
+                ></div>
+                
+                <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-slate-100 py-2 animate-in fade-in zoom-in duration-200 origin-top-right">
+                  <div className="px-4 py-3 border-b border-slate-50 mb-1">
+                    <p className="text-sm font-bold text-slate-800">Admin Sistem</p>
+                    <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Admin</p>
+                  </div>
+                  
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 transition-colors text-sm font-bold group"
+                  >
+                    <div className="p-1.5 bg-red-50 rounded-lg group-hover:bg-red-100 transition-colors">
+                      <LogOut size={18} strokeWidth={2.5} />
+                    </div>
+                    Keluar
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-          <Avatar className="h-11 w-11 bg-[#0EA5E9] text-white ring-4 ring-slate-50 cursor-pointer">
-            <AvatarFallback className="bg-[#0EA5E9] text-white"><User size={22} /></AvatarFallback>
-          </Avatar>
         </div>
       </header>
 
