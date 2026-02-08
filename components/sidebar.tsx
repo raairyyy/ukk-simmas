@@ -28,8 +28,9 @@ const MENUS = {
   ],
   siswa: [
     { label: "Dashboard", subLabel: "Ringkasan sistem", href: "/dashboard/siswa", icon: LayoutDashboard, exact: true },
-    { label: "Lowongan", subLabel: "Cari tempat magang", href: "/dashboard/siswa/lowongan", icon: Briefcase },
-    { label: "Logbook", subLabel: "Input aktivitas", href: "/dashboard/siswa/logbook", icon: BookOpen },
+    { label: "DUDI", subLabel: "Cari tempat magang", href: "/dashboard/siswa/dudi", icon: Building2 },
+    { label: "Jurnal Harian", subLabel: "Catatan harian", href: "/dashboard/siswa/jurnal", icon: BookOpen },
+    { label: "Magang", subLabel: "Data magang saya", href: "/dashboard/siswa/magang", icon: GraduationCap },
   ]
 }
 
