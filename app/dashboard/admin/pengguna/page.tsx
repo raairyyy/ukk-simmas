@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import {
   Users, Plus, Search, Pencil, Trash2, User, Mail, CheckCircle2,
-  Shield, Filter, Lock, ChevronLeft, ChevronRight, GraduationCap, Bell, LogOut
+  Lock, Bell, LogOut, XCircle, Eye, EyeOff
 } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
 import { Card } from "@/components/ui/card"
@@ -12,10 +12,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
+import { ConfirmModal } from "@/components/modals/confirm-modal"
 
 // Inisialisasi Supabase
 const supabase = createClient(
@@ -32,8 +32,16 @@ export default function UserManagement() {
   // Modal States
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
+
+  // Profile & UI States
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [userData, setUserData] = useState<any>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState("")
 
   // Form States
   const [formData, setFormData] = useState({
@@ -42,19 +50,22 @@ export default function UserManagement() {
     role: "siswa",
     password: "",
     confirmPassword: "",
-    verified: false
+    verifiedStatus: "unverified"
   })
 
-  const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const [userData, setUserData] = useState<any>(null)
+  // LOGIKA VALIDASI: Tombol aktif hanya jika semua field terisi
+  const isUserFormValid = 
+    formData.name.trim() !== "" &&
+    formData.email.trim() !== "" &&
+    formData.password.trim() !== "" &&
+    formData.confirmPassword.trim() !== "" &&
+    formData.password === formData.confirmPassword;
 
-  // Ambil data profil dan users saat halaman dimuat
   useEffect(() => {
     fetch("/api/auth/me").then(res => res.json()).then(res => setUserData(res.user))
-    fetchUsers() // FIX: Panggil fetchUsers, bukan fetchDudi
+    fetchUsers()
   }, [])
 
-  // Fungsi Logout
   const handleLogout = async () => {
     const res = await fetch("/api/auth/logout", { method: "POST" })
     if (res.ok) window.location.href = "/login"
@@ -62,18 +73,19 @@ export default function UserManagement() {
 
   const fetchUsers = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .order("id", { ascending: true })
-    
+    const { data, error } = await supabase.from("users").select("*").order("id", { ascending: true })
     if (!error) setUsers(data)
     setLoading(false)
   }
 
-  const handleSaveAdd = async () => {
-    if (formData.password !== formData.confirmPassword) return alert("Password tidak cocok!");
+  const triggerToast = (message: string) => {
+    setToastMessage(message)
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 3000)
+  }
 
+  const handleSaveAdd = async () => {
+    if (!isUserFormValid) return;
     try {
       const res = await fetch("/api/pengguna", {
         method: "POST",
@@ -83,21 +95,20 @@ export default function UserManagement() {
           email: formData.email,
           role: formData.role,
           password: formData.password,
-          verified: formData.verified
+          verified: formData.verifiedStatus === "verified"
         }),
       });
-
       const result = await res.json();
-
       if (res.ok) {
         setIsAddOpen(false);
         fetchUsers(); 
         resetForm();
+        triggerToast("Data User berhasil ditambahkan")
       } else {
         alert(result.error);
       }
     } catch (err) {
-      console.error("Error pendaftaran:", err);
+      console.error("Error:", err);
     }
   };
 
@@ -108,55 +119,78 @@ export default function UserManagement() {
         name: formData.name,
         email: formData.email,
         role: formData.role,
-        email_verified_at: formData.verified ? (selectedUser.email_verified_at || new Date().toISOString()) : null
+        email_verified_at: formData.verifiedStatus === "verified" ? (selectedUser.email_verified_at || new Date().toISOString()) : null
       })
       .eq("id", selectedUser.id)
 
     if (!error) {
       setIsEditOpen(false)
       fetchUsers()
-    } else {
-      alert(error.message)
+      triggerToast("Data User berhasil diperbarui")
     }
   }
 
   const handleDelete = async () => {
+    if (!selectedUser) return
     const { error } = await supabase.from("users").delete().eq("id", selectedUser.id)
     if (!error) {
-      setIsDeleteOpen(false)
+      setIsConfirmOpen(false)
       fetchUsers()
+      triggerToast("Data User berhasil dihapus")
     }
   }
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", role: "siswa", password: "", confirmPassword: "", verified: false })
+    setFormData({ name: "", email: "", role: "siswa", password: "", confirmPassword: "", verifiedStatus: "unverified" })
+    setShowPassword(false)
+    setShowConfirmPassword(false)
   }
 
   const filteredUsers = users.filter(u => {
-    const matchSearch = u.name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase())
+    const matchSearch = (u.name || "").toLowerCase().includes(search.toLowerCase()) || (u.email || "").toLowerCase().includes(search.toLowerCase())
     const matchRole = roleFilter === "all" || u.role?.toLowerCase() === roleFilter.toLowerCase()
     return matchSearch && matchRole
   })
 
   return (
     <>
+      {/* TOAST NOTIFICATION */}
+      {showToast && (
+        <div className="fixed top-6 right-6 z-[200] animate-in slide-in-from-right duration-300">
+          <div className="bg-[#84cc16] text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 border border-white/20 min-w-[300px]">
+            <div className="bg-white/20 p-1.5 rounded-full flex items-center justify-center">
+              <CheckCircle2 size={20} strokeWidth={3} />
+            </div>
+            <p className="font-bold text-sm tracking-wide flex-1">{toastMessage}</p>
+            <button onClick={() => setShowToast(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors ml-2">
+              <XCircle size={20} className="opacity-80" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal 
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Konfirmasi Hapus"
+        description="Apakah Anda yakin ingin menghapus data user ini? Tindakan ini tidak dapat dibatalkan."
+        confirmText="Ya, Hapus"
+        variant="danger"
+      />
+
       <header className="bg-white border-b border-slate-100 h-[90px] px-10 flex items-center justify-between sticky top-0 z-50">
         <div>
           <h2 className="font-bold text-xl text-slate-800">SMK Brantas Karangkates</h2>
           <p className="text-sm text-slate-500 mt-1 font-medium">Sistem Manajemen Magang Siswa</p>
         </div>
-
         <div className="flex items-center gap-8">
           <button className="text-slate-400 hover:text-slate-600 transition-colors relative">
             <Bell size={24} strokeWidth={1.5} />
             <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
-
           <div className="relative">
-            <div 
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-4 cursor-pointer group"
-            >
+            <div onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-4 cursor-pointer group">
               <div className="w-12 h-12 bg-[#00A9D8] rounded-[14px] flex items-center justify-center text-white shadow-sm transition-transform group-hover:scale-105">
                 <User size={26} strokeWidth={2.5} />
               </div>
@@ -165,7 +199,6 @@ export default function UserManagement() {
                 <p className="text-sm text-slate-400 font-semibold mt-1.5 uppercase">Admin</p>
               </div>
             </div>
-
             {isProfileOpen && (
               <>
                 <div className="fixed inset-0 z-[-1]" onClick={() => setIsProfileOpen(false)}></div>
@@ -174,13 +207,8 @@ export default function UserManagement() {
                     <p className="text-sm font-bold text-slate-800">{userData?.name}</p>
                     <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Admin</p>
                   </div>
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 transition-colors text-sm font-bold group"
-                  >
-                    <div className="p-1.5 bg-red-50 rounded-lg group-hover:bg-red-100 transition-colors">
-                      <LogOut size={18} strokeWidth={2.5} />
-                    </div>
+                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 transition-colors text-sm font-bold group">
+                    <div className="p-1.5 bg-red-50 rounded-lg group-hover:bg-red-100 transition-colors"><LogOut size={18} strokeWidth={2.5} /></div>
                     Keluar
                   </button>
                 </div>
@@ -239,7 +267,7 @@ export default function UserManagement() {
                       <TableCell className="py-6">
                         <div className="flex items-center gap-4">
                           <Avatar className="h-12 w-12 bg-[#0093E9] text-white">
-                            <AvatarFallback>{user.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                            <AvatarFallback>{(user.name || "U").substring(0, 2).toUpperCase()}</AvatarFallback>
                           </Avatar>
                           <div>
                             <p className="font-bold text-slate-800 text-base">{user.name}</p>
@@ -271,14 +299,10 @@ export default function UserManagement() {
                         <div className="flex items-center justify-center gap-2">
                           <Button variant="ghost" size="icon" onClick={() => {
                             setSelectedUser(user);
-                            setFormData({ ...formData, name: user.name, email: user.email, role: user.role, verified: !!user.email_verified_at });
+                            setFormData({ ...formData, name: user.name, email: user.email, role: user.role, password: "", confirmPassword: "", verifiedStatus: user.email_verified_at ? "verified" : "unverified" });
                             setIsEditOpen(true);
-                          }} className="text-slate-400 hover:text-blue-600 hover:bg-blue-50">
-                            <Pencil size={18} />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => { setSelectedUser(user); setIsDeleteOpen(true); }} className="text-slate-400 hover:text-red-600 hover:bg-red-50">
-                            <Trash2 size={18} />
-                          </Button>
+                          }} className="text-slate-400 hover:text-blue-600 hover:bg-blue-50"><Pencil size={18} /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => { setSelectedUser(user); setIsConfirmOpen(true); }} className="text-slate-400 hover:text-red-600 hover:bg-red-50"><Trash2 size={18} /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -290,92 +314,117 @@ export default function UserManagement() {
         </Card>
       </div>
 
+      {/* --- MODAL TAMBAH USER --- */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="sm:max-w-[600px] rounded-[24px]">
-          <DialogHeader><DialogTitle className="text-2xl font-bold">Tambah User Baru</DialogTitle></DialogHeader>
-          <div className="grid gap-6 py-4">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Tambah User Baru</DialogTitle>
+            <p className="text-sm text-slate-500 font-medium">Lengkapi semua informasi yang diperlukan</p>
+          </DialogHeader>
+          <div className="grid gap-6 py-2">
             <div className="grid gap-2">
-              <Label className="font-semibold">Nama Lengkap *</Label>
-              <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Masukkan nama lengkap" className="h-12 rounded-xl" />
+              <Label className="font-bold text-slate-700">Nama Lengkap <span className="text-red-500">*</span></Label>
+              <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Masukkan nama lengkap" className="h-12 rounded-xl bg-slate-50/50" />
             </div>
             <div className="grid gap-2">
-              <Label className="font-semibold">Email *</Label>
-              <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="user@email.com" className="h-12 rounded-xl" />
+              <Label className="font-bold text-slate-700">Email <span className="text-red-500">*</span></Label>
+              <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="Contoh: user@email.com" className="h-12 rounded-xl bg-slate-50/50" />
             </div>
             <div className="grid gap-2">
-              <Label className="font-semibold">Role *</Label>
+              <Label className="font-bold text-slate-700">Role <span className="text-red-500">*</span></Label>
               <Select value={formData.role} onValueChange={(val) => setFormData({...formData, role: val})}>
-                <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="admin">Admin</SelectItem><SelectItem value="guru">Guru</SelectItem><SelectItem value="siswa">Siswa</SelectItem></SelectContent>
+                <SelectTrigger className="h-12 rounded-xl bg-slate-50/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="guru">Guru</SelectItem>
+                  <SelectItem value="siswa">Siswa</SelectItem>
+                </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label className="font-semibold">Password *</Label>
-                <Input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="h-12 rounded-xl" />
-              </div>
-              <div className="grid gap-2">
-                <Label className="font-semibold">Konfirmasi Password *</Label>
-                <Input type="password" value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} className="h-12 rounded-xl" />
+            <div className="grid gap-2">
+              <Label className="font-bold text-slate-700">Password <span className="text-red-500">*</span></Label>
+              <div className="relative">
+                <Input type={showPassword ? "text" : "password"} value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Masukkan password (min. 6 karakter)" className="h-12 rounded-xl bg-slate-50/50 pr-10" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
             </div>
-            <div className="flex items-center space-x-3 bg-slate-50 p-4 rounded-xl">
-              <Checkbox id="verified" checked={formData.verified} onCheckedChange={(val) => setFormData({...formData, verified: !!val})} />
-              <Label htmlFor="verified" className="font-medium text-slate-600 cursor-pointer">Verifikasi email secara otomatis?</Label>
+            <div className="grid gap-2">
+              <Label className="font-bold text-slate-700">Konfirmasi Password <span className="text-red-500">*</span></Label>
+              <div className="relative">
+                <Input type={showConfirmPassword ? "text" : "password"} value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} placeholder="Ulangi password" className="h-12 rounded-xl bg-slate-50/50 pr-10" />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label className="font-bold text-slate-700">Email Verification</Label>
+              <Select value={formData.verifiedStatus} onValueChange={(val) => setFormData({...formData, verifiedStatus: val})}>
+                <SelectTrigger className="h-12 rounded-xl bg-slate-50/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unverified">Unverified</SelectItem>
+                  <SelectItem value="verified">Verified</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="h-12 px-8 rounded-xl">Batal</Button>
-            <Button onClick={handleSaveAdd} className="bg-[#0EA5E9] hover:bg-[#0284C7] h-12 px-8 rounded-xl font-bold text-white">Simpan Data</Button>
+          <DialogFooter className="gap-3 pt-2">
+            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="h-12 px-8 rounded-xl font-bold text-slate-600 flex-1">Batal</Button>
+            
+            {/* PERBAIKAN TOMBOL SIMPAN (Sesuai Gambar 6 & 7) */}
+            <Button 
+              disabled={!isUserFormValid} 
+              onClick={handleSaveAdd} 
+              className={`h-12 px-8 rounded-xl font-bold transition-all flex-1 shadow-md ${
+                isUserFormValid 
+                ? "bg-[#06b6d4] hover:bg-[#0891b2] text-white shadow-cyan-100" 
+                : "bg-[#CBD5E1] text-slate-400 cursor-not-allowed shadow-none"
+              }`}
+            >
+              Simpan
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* --- MODAL EDIT USER --- */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[600px] rounded-[24px]">
-          <DialogHeader><DialogTitle className="text-2xl font-bold">Edit User</DialogTitle></DialogHeader>
-          <div className="grid gap-6 py-4">
-            <div className="bg-blue-50 border border-blue-100 text-blue-800 p-4 rounded-xl text-sm flex gap-3">
-              <Lock size={20} className="shrink-0" />
-              <p className="font-medium">Catatan: Untuk mengubah password, silakan gunakan fitur reset password yang terpisah.</p>
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Edit User</DialogTitle>
+            <p className="text-sm text-slate-500 font-medium">Perbarui informasi user</p>
+          </DialogHeader>
+          <div className="grid gap-6 py-2">
+            <div className="grid gap-2">
+              <Label className="font-bold text-slate-700">Nama Lengkap <span className="text-red-500">*</span></Label>
+              <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="h-12 rounded-xl bg-slate-50/50" />
             </div>
             <div className="grid gap-2">
-              <Label className="font-semibold">Nama Lengkap *</Label>
-              <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="h-12 rounded-xl" />
+              <Label className="font-bold text-slate-700">Email <span className="text-red-500">*</span></Label>
+              <Input value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="h-12 rounded-xl bg-slate-50/50" />
             </div>
             <div className="grid gap-2">
-              <Label className="font-semibold">Email *</Label>
-              <Input value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="h-12 rounded-xl" />
-            </div>
-            <div className="grid gap-2">
-              <Label className="font-semibold">Role *</Label>
+              <Label className="font-bold text-slate-700">Role <span className="text-red-500">*</span></Label>
               <Select value={formData.role} onValueChange={(val) => setFormData({...formData, role: val})}>
-                <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-12 rounded-xl bg-slate-50/50"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="admin">Admin</SelectItem><SelectItem value="guru">Guru</SelectItem><SelectItem value="siswa">Siswa</SelectItem></SelectContent>
               </Select>
             </div>
-            <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl">
-              <Checkbox id="edit-verified" checked={formData.verified} onCheckedChange={(val) => setFormData({...formData, verified: !!val})} />
-              <Label htmlFor="edit-verified" className="font-medium text-slate-600 cursor-pointer">Verified (Terverifikasi)</Label>
+            <div className="bg-blue-50 border border-blue-100 text-blue-600 p-4 rounded-xl text-sm font-medium leading-relaxed">
+              <span className="font-bold">Catatan:</span> Untuk mengubah password, silakan gunakan fitur reset password yang terpisah.
+            </div>
+            <div className="grid gap-2">
+              <Label className="font-bold text-slate-700">Email Verification</Label>
+              <Select value={formData.verifiedStatus} onValueChange={(val) => setFormData({...formData, verifiedStatus: val})}>
+                <SelectTrigger className="h-12 rounded-xl bg-slate-50/50"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unverified">Unverified</SelectItem>
+                  <SelectItem value="verified">Verified</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)} className="h-12 px-8 rounded-xl">Batal</Button>
-            <Button onClick={handleSaveEdit} className="bg-[#0EA5E9] hover:bg-[#0284C7] h-12 px-8 rounded-xl font-bold text-white">Simpan Perubahan</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="sm:max-w-[450px] rounded-[24px]">
-          <DialogHeader>
-            <div className="mx-auto w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4 text-red-500"><Trash2 size={32} /></div>
-            <DialogTitle className="text-center text-2xl font-bold">Konfirmasi Hapus</DialogTitle>
-            <DialogDescription className="text-center text-base pt-3">Apakah Anda yakin ingin menghapus data user ini? Tindakan ini tidak dapat dibatalkan.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="sm:justify-center gap-3 mt-6">
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)} className="h-12 px-8 rounded-xl">Batal</Button>
-            <Button onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white h-12 px-8 rounded-xl font-bold">Ya, Hapus</Button>
+          <DialogFooter className="gap-3 pt-2">
+            <Button variant="outline" onClick={() => setIsEditOpen(false)} className="h-12 px-8 rounded-xl font-bold text-slate-600 flex-1">Batal</Button>
+            <Button onClick={handleSaveEdit} className="bg-[#06b6d4] hover:bg-[#0891b2] text-white h-12 px-8 rounded-xl font-bold flex-1 shadow-md">Simpan Perubahan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
