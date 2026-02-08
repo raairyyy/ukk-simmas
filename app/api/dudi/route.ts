@@ -14,32 +14,19 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export async function GET() {
   const { data, error } = await supabase
     .from("dudi")
-.select(`
-  id,
-  nama_perusahaan,
-  alamat,
-  email,
-  telepon,
-  penanggung_jawab,
-  status,
-  is_deleted,
-  magang (
-    id,
-    status
-  )
-`)
-    .eq("is_deleted", false)
+    .select(`
+      *,
+      magang ( id, status )
+    `)
+    // Hapus filter is_deleted agar data yang di-soft delete tetap masuk ke list
     .order("id", { ascending: true });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Hitung jumlah siswa magang aktif
   const formatted = data.map(d => ({
     ...d,
     total_siswa_magang: d.magang
-      ? d.magang.filter((m: any) => m.status === "berlangsung").length
+      ? d.magang.filter((m: any) => m.status === "berlangsung" || m.status === "aktif").length
       : 0
   }));
 
