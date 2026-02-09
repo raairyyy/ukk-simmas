@@ -7,21 +7,36 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- READ (Ambil Data) ---
-export async function GET() {
-  const { data, error } = await supabase
-    .from("magang")
-    .select(`
-      *,
-      siswa:siswa_id (*),
-      guru:guru_id (*),
-      dudi:dudi_id (*)
-    `)
-    .eq("is_deleted", false)
-    .order("created_at", { ascending: false });
+export async function GET(req: Request) {
+  try {
+    // Ambil guruId dari query params misalnya ?guru_id=1
+    const url = new URL(req.url);
+    const guruId = url.searchParams.get("guru_id");
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ data });
+    let query = supabase
+      .from("magang")
+      .select(`
+        *,
+        siswa:siswa_id (*),
+        guru:guru_id (*),
+        dudi:dudi_id (*)
+      `)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false });
+
+    if (guruId) {
+      query = query.eq("guru_id", guruId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ data });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
+
 
 // --- CREATE (Tambah Data) ---
 export async function POST(req: Request) {

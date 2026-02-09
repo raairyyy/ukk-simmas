@@ -195,7 +195,7 @@ export default function UserManagement() {
                 <User size={26} strokeWidth={2.5} />
               </div>
               <div className="text-left hidden sm:block">
-                <p className="text-[17px] font-bold text-[#1E293B] leading-none">{userData?.name || "Admin Sistem"}</p>
+                <p className="text-[17px] font-bold text-[#1E293B] leading-none">{userData?.name || "admin"}</p>
                 <p className="text-sm text-slate-400 font-semibold mt-1.5 uppercase">Admin</p>
               </div>
             </div>

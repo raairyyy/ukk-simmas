@@ -1,40 +1,46 @@
 "use client"
-import { useEffect, useState } from "react"
-import { Users, Building2, GraduationCap, BookOpen, User, LogOut } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useEffect, useState } from "react";
+import { Users, Building2, GraduationCap, BookOpen, User, LogOut } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function GuruDashboard() {
-  const [userData, setUserData] = useState<any>(null)
-  const [isProfileOpen, setIsProfileOpen] = useState(false)
-  
-  // FIX: Tambahkan state stats agar tidak error "Cannot find name 'stats'"
+  const [userData, setUserData] = useState<any>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [stats, setStats] = useState({
     totalSiswa: 0,
     dudi: 0,
     aktif: 0,
     logbook: 0
-  })
+  });
 
+  // Ambil user data
   useEffect(() => {
-    // Ambil data profil
     fetch("/api/auth/me")
       .then(res => res.json())
-      .then(data => setUserData(data.user))
-
-    // Ambil data statistik (Pastikan API ini sudah dibuat)
-    fetch("/api/guru/dashboard-stats")
-      .then(res => res.json())
       .then(data => {
-        if (data) setStats(data)
+        setUserData(data.user);
       })
-      .catch(err => console.error("Error fetching stats:", err))
-  }, [])
+      .catch(err => console.error(err));
+  }, []);
+
+  // Ambil dashboard stats setelah userData siap
+  useEffect(() => {
+    if (!userData?.id_guru) return;
+
+    fetch(`/api/guru/dashboard?guru_id=${userData.id_guru}`)
+      .then(res => res.json())
+      .then(statData => {
+        console.log("Dashboard stats:", statData);
+        if (statData && !statData.error) setStats(statData);
+      })
+      .catch(err => console.error("Fetch error:", err));
+  }, [userData]);
 
   const handleLogout = async () => {
-    const res = await fetch("/api/auth/logout", { method: "POST" })
-    if (res.ok) window.location.href = "/login"
-  }
+    const res = await fetch("/api/auth/logout", { method: "POST" });
+    if (res.ok) window.location.href = "/login";
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -69,30 +75,10 @@ export default function GuruDashboard() {
         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Guru</h1>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
-          <StatCard 
-            title="Siswa Anda" 
-            value={stats.totalSiswa} 
-            desc="Siswa yang Anda bimbing" 
-            icon={<Users className="text-[#06b6d4]" />} 
-          />
-          <StatCard 
-            title="DUDI Aktif" 
-            value={stats.dudi} 
-            desc="Mitra industri" 
-            icon={<Building2 className="text-[#06b6d4]" />} 
-          />
-          <StatCard 
-            title="Sedang Magang" 
-            value={stats.aktif} 
-            desc="Siswa aktif di lapangan" 
-            icon={<GraduationCap className="text-[#06b6d4]" />} 
-          />
-          <StatCard 
-            title="Logbook Baru" 
-            value={stats.logbook} 
-            desc="Laporan perlu diperiksa" 
-            icon={<BookOpen className="text-[#06b6d4]" />} 
-          />
+          <StatCard title="Total Siswa" value={stats.totalSiswa} desc="Seluruh siswa terdaftar" icon={<Users className="text-[#06b6d4]" />} />
+          <StatCard title="DUDI Partner" value={stats.dudi} desc="Perusahaan mitra" icon={<Building2 className="text-[#06b6d4]" />} />
+          <StatCard title="Siswa Magang" value={stats.aktif} desc="Sedang aktif magang" icon={<GraduationCap className="text-[#06b6d4]" />} />
+          <StatCard title="Logbook Hari Ini" value={stats.logbook} desc="Laporan masuk hari ini" icon={<BookOpen className="text-[#06b6d4]" />} />
         </div>
       </div>
     </div>

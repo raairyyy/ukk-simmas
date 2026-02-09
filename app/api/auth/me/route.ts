@@ -17,22 +17,39 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Dekripsi token untuk mendapatkan ID user
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
 
-    // Ambil data user dari tabel users berdasarkan ID di token
+    // Ambil data user + relasi guru
     const { data: user, error } = await supabase
       .from("users")
-      .select("id, name, email, role")
+      .select(`
+        id,
+        name,
+        email,
+        role,
+        guru(id)
+      `)
       .eq("id", decoded.id)
-      .single();
+      .single(); // single user
 
     if (error || !user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ user });
+    // Akses id guru dari array relasi
+    const id_guru = Array.isArray(user.guru) ? user.guru[0]?.id || null : null;
+
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        id_guru,
+      },
+    });
   } catch (err) {
+    console.error(err);
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 }
