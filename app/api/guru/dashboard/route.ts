@@ -93,7 +93,7 @@ export async function GET(req: Request) {
                .select("*", { count: "exact", head: true })
                .eq("guru_id", guruId)
                .eq("dudi_id", d.id)
-               .eq("status", "Aktif");
+               .eq("status", "berlangsung");
             return { ...d, jumlah_siswa: count || 0 };
          }));
       }
