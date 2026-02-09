@@ -1,44 +1,50 @@
-import { NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from("school_settings")
-    .select("*")
-    .single()
+  try {
+    // Mengambil data pertama yang ditemukan
+    const { data, error } = await supabase
+      .from("school_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle(); // Menggunakan maybeSingle agar tidak error jika tabel kosong
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ data });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
-
-  return NextResponse.json({ data })
 }
 
 export async function PUT(req: Request) {
   try {
-    const body = await req.json()
+    const body = await req.json();
+    // Pisahkan ID agar tidak ikut diupdate di kolom update_at atau lainnya
+    const { id, created_at, updated_at, ...updateData } = body;
 
-    const { error } = await supabase
-      .from("school_settings")
-      .update({
-        logo_url: body.logo_url,
-        nama_sekolah: body.nama_sekolah,
-        alamat: body.alamat,
-        telepon: body.telepon,
-        email: body.email,
-        website: body.website,
-        kepala_sekolah: body.kepala_sekolah,
-        npsn: body.npsn,
-        updated_at: new Date()
-      })
-      .eq("id", 1) // pakai 1 row global
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (!id) {
+      return NextResponse.json({ error: "ID Pengaturan tidak ditemukan" }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true })
+    const { data, error } = await supabase
+      .from("school_settings")
+      .update({
+        ...updateData,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id) 
+      .select()
+      .single();
+
+    if (error) throw error;
+    return NextResponse.json({ data });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
