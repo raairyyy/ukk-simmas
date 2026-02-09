@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { SharedHeader } from "@/components/shared-header"
 
 
 export default function SettingsPage() {
@@ -87,37 +88,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <header className="bg-white border-b border-slate-100 h-[90px] px-10 flex items-center justify-between sticky top-0 z-50 shadow-sm">
-        <div>
-          <h2 className="font-bold text-xl text-slate-800">{schoolData.nama_sekolah || "Memuat..."}</h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium italic">Sistem Manajemen Magang Siswa</p>
-        </div>
-
-        <div className="flex items-center gap-8">
-          <button className="text-slate-400 hover:text-slate-600 relative">
-            <Bell size={24} />
-            <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
-          <div className="relative">
-            <div onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-4 cursor-pointer">
-              <div className="w-12 h-12 bg-[#00A9D8] rounded-[14px] flex items-center justify-center text-white shadow-sm hover:scale-105 transition-transform">
-                <User size={26} strokeWidth={2.5} />
-              </div>
-              <div className="text-left hidden sm:block">
-                <p className="text-[17px] font-bold text-[#1E293B] leading-none">{userData?.name || "Admin"}</p>
-                <p className="text-sm text-slate-400 font-semibold mt-1.5 uppercase tracking-wider">Admin Sistem</p>
-              </div>
-            </div>
-            {isProfileOpen && (
-              <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 animate-in fade-in zoom-in duration-200">
-                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 font-bold text-sm">
-                  <LogOut size={18} /> Keluar
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <SharedHeader />
 
       <div className="p-8 xl:p-10 max-w-[1680px] mx-auto space-y-8">
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Pengaturan Sekolah</h1>

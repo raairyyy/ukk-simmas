@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
 import {
   LayoutDashboard,
   Building2,
@@ -9,10 +10,10 @@ import {
   Settings,
   GraduationCap,
   BookOpen,
-  Briefcase,
   FileText
 } from "lucide-react"
 
+// Definisi Menu
 const MENUS = {
   admin: [
     { label: "Dashboard", subLabel: "Ringkasan sistem", href: "/dashboard/admin", icon: LayoutDashboard, exact: true },
@@ -36,6 +37,7 @@ const MENUS = {
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const [schoolName, setSchoolName] = useState("SMK Negeri 1 Surabaya")
   
   const segments = pathname.split('/')
   const currentRole = (segments[2] as 'admin' | 'guru' | 'siswa') || 'admin'
@@ -46,80 +48,101 @@ export default function Sidebar() {
     currentRole === 'siswa' ? 'Panel Siswa' : 
     'Panel Admin'
 
+  // Ambil data sekolah agar footer sidebar dinamis
+  useEffect(() => {
+    fetch("/api/school-settings", { cache: "no-store" })
+      .then(res => res.json())
+      .then(json => {
+        if (json.data?.nama_sekolah) setSchoolName(json.data.nama_sekolah)
+      })
+      .catch(err => console.log(err))
+  }, [])
+
   return (
-    <aside className="w-[320px] bg-white border-r border-slate-50 hidden md:flex flex-col fixed h-full z-20 px-6 py-10">
-      {/* LOGO SECTION (Gambar 6) */}
-      <div className="flex items-center gap-4 px-2 mb-12">
-        <div className="w-[52px] h-[52px] bg-gradient-to-br from-[#00A9D8] to-[#007EB5] rounded-[18px] flex items-center justify-center text-white shadow-lg shadow-cyan-100">
-          <GraduationCap size={28} strokeWidth={2.2} />
-        </div>
-        <div>
-          <h1 className="font-bold text-[22px] leading-none text-[#1E293B] tracking-tight">SIMMAS</h1>
-          <p className="text-sm font-semibold text-slate-400 mt-1.5">{panelTitle}</p>
+    <aside className="w-[320px] bg-white border-r border-slate-100 hidden md:flex flex-col fixed h-full z-20">
+      
+      {/* === LOGO SECTION === */}
+      {/* PENTING: h-[90px] disamakan dengan Header agar sejajar */}
+      <div className="h-[90px] flex items-center px-8 border-b border-transparent"> 
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 bg-gradient-to-br from-[#00A9D8] to-[#007EB5] rounded-[14px] flex items-center justify-center text-white shadow-lg shadow-cyan-100/50">
+            <GraduationCap size={24} strokeWidth={2.5} />
+          </div>
+          <div>
+            <h1 className="font-extrabold text-[22px] leading-none text-[#1E293B] tracking-tight">SIMMAS</h1>
+            <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{panelTitle}</p>
+          </div>
         </div>
       </div>
 
-      {/* NAVIGATION SECTION */}
-      <nav className="flex-1 space-y-5">
-        {menuItems.map((item, index) => {
-          const isActive = item.exact 
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(`${item.href}/`)
+      {/* === SCROLLABLE CONTENT === */}
+      <div className="flex-1 flex flex-col justify-between px-6 py-8 overflow-y-auto">
+        
+        {/* Navigation Menu */}
+        <nav className="space-y-3">
+          {menuItems.map((item, index) => {
+            const isActive = item.exact 
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`)
 
-          return (
-            <SidebarItem 
-              key={index}
-              icon={<item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />} 
-              label={item.label} 
-              subLabel={item.subLabel} 
-              href={item.href}
-              active={isActive}
-            />
-          )
-        })}
-      </nav>
+            return (
+              <SidebarItem 
+                key={index}
+                icon={<item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />} 
+                label={item.label} 
+                subLabel={item.subLabel} 
+                href={item.href}
+                active={isActive}
+              />
+            )
+          })}
+        </nav>
 
-      {/* FOOTER SECTION (Gambar 6 Bawah) */}
-      <div className="mt-auto">
-        <div className="bg-[#F8FAFC] p-5 rounded-[22px] border border-slate-50 flex items-center gap-4">
-          <div className="relative flex items-center justify-center">
-            <div className="w-4 h-4 rounded-full bg-[#84cc16]/20 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-[#84cc16] shadow-[0_0_8px_rgba(132,204,22,0.8)]"></div>
+        {/* === FOOTER SECTION === */}
+        <div className="mt-10">
+          <div className="bg-[#F8FAFC] p-5 rounded-[20px] border border-slate-100 flex items-start gap-3.5">
+            <div className="relative flex items-center justify-center mt-1">
+              <div className="w-3.5 h-3.5 rounded-full bg-[#84cc16]/20 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-[#84cc16] shadow-[0_0_8px_rgba(132,204,22,0.6)] animate-pulse"></div>
+              </div>
+            </div>
+            <div>
+              <p className="text-[13px] font-bold text-[#334155] leading-snug">{schoolName}</p>
+              <p className="text-[10px] font-semibold text-slate-400 mt-1">Sistem Pelaporan v1.0</p>
             </div>
           </div>
-          <div>
-            <p className="text-[15px] font-bold text-[#334155] leading-none">SMK Negeri 1 Surabaya</p>
-            <p className="text-xs font-semibold text-slate-400 mt-2">Sistem Pelaporan v1.0</p>
-          </div>
         </div>
+
       </div>
     </aside>
   )
 }
 
+// Komponen Item Menu
 function SidebarItem({ icon, label, subLabel, active, href }: any) {
   return (
     <Link href={href}>
       <div
-        className={`group flex items-center gap-4 p-4 rounded-[20px] cursor-pointer transition-all duration-300 ${
+        className={`group flex items-center gap-4 p-3.5 rounded-[18px] cursor-pointer transition-all duration-300 border ${
           active
-            ? "bg-gradient-to-r from-[#00A9D8] to-[#008BB8] text-white shadow-md shadow-cyan-100"
-            : "text-[#64748B] hover:bg-slate-50 hover:text-[#1E293B]"
+            ? "bg-[#00A9D8] border-[#00A9D8] text-white shadow-lg shadow-cyan-100"
+            : "bg-transparent border-transparent text-[#64748B] hover:bg-slate-50 hover:text-[#1E293B]"
         }`}
       >
-        {/* Container Icon */}
-        <div className={`w-11 h-11 flex items-center justify-center rounded-xl transition-colors ${
-            active ? "bg-white/20 text-white" : "bg-slate-50 text-slate-400 group-hover:text-[#00A9D8] group-hover:bg-cyan-50"
+        {/* Icon Container */}
+        <div className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors ${
+            active ? "bg-white/20 text-white" : "bg-white text-slate-400 group-hover:text-[#00A9D8] border border-slate-100 group-hover:border-blue-100"
         }`}>
           {icon}
         </div>
 
+        {/* Text Content */}
         <div>
-          <p className={`text-[16px] font-bold leading-none ${active ? "text-white" : "text-[#475569]"}`}>
+          <p className={`text-[16px] font-bold leading-none ${active ? "text-white" : "text-[#334155]"}`}>
             {label}
           </p>
-          <p className={`text-[13px] mt-1.5 font-medium transition-colors ${
-            active ? "text-cyan-50/80" : "text-slate-400"
+          <p className={`text-[14px] mt-1 font-medium transition-colors ${
+            active ? "text-cyan-50" : "text-slate-400"
           }`}>
             {subLabel}
           </p>
