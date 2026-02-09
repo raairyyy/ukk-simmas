@@ -43,7 +43,7 @@ const dudi = Array.from(new Set(dudiData?.map((row) => row.dudi_id))).length
       .from("magang")
       .select("id", { count: "exact" })
       .eq("guru_id", Number(guruId))
-      .eq("status", "aktif")  // pastikan status sesuai enum
+      .eq("status", "berlangsung")  // pastikan status sesuai enum
 
     // 4. Logbook hari ini (misal logbook di tabel terpisah, atau hitung magang yang update hari ini)
     // contoh: hitung magang yang updated hari ini
