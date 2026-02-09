@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { SharedHeader } from "@/components/shared-header"
 import {
   Table,
   TableBody,
@@ -29,21 +30,7 @@ export default function GuruDudiPage() {
   return (
     <>
       {/* Header Page */}
-      <header className="bg-white border-b border-slate-100 h-[90px] px-10 flex items-center justify-between sticky top-0 z-10">
-        <div>
-          <h2 className="font-bold text-xl text-slate-800">SMK bRANTAS Karangkates</h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Sistem Manajemen Magang Siswa</p>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="text-right hidden sm:block">
-            <p className="text-base font-bold text-slate-800">Guru Pembimbing</p>
-            <p className="text-sm text-slate-500 font-medium">Guru</p>
-          </div>
-          <Avatar className="h-12 w-12 bg-[#0EA5E9] text-white ring-4 ring-slate-50 cursor-pointer">
-            <AvatarFallback className="bg-[#0EA5E9] text-white font-bold"><User size={24} /></AvatarFallback>
-          </Avatar>
-        </div>
-      </header>
+      <SharedHeader />
 
       {/* Content Body */}
       <div className="p-10 max-w-[1680px] mx-auto space-y-8">

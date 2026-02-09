@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { SharedHeader } from "@/components/shared-header"
 
 // Tipe Data
 type Dudi = {
@@ -107,24 +108,7 @@ export default function SiswaDudiList() {
       )}
 
       {/* HEADER */}
-      <header className="bg-white border-b border-slate-100 h-[90px] px-10 flex items-center justify-between sticky top-0 z-50 shadow-sm">
-        <div>
-          <h2 className="font-bold text-xl text-slate-800">SMK Negeri 1 Surabaya</h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Sistem Manajemen Magang Siswa</p>
-        </div>
-        <div className="flex items-center gap-8">
-          <button className="text-slate-400 hover:text-slate-600 relative"><Bell size={24} /><span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span></button>
-          <div className="relative">
-            <div onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center gap-4 cursor-pointer">
-              <div className="w-12 h-12 bg-[#00A9D8] rounded-[14px] flex items-center justify-center text-white"><User size={26} /></div>
-              <div className="text-left hidden sm:block">
-                <p className="text-[17px] font-bold text-[#1E293B] leading-none">{userData?.name || "Siswa"}</p>
-                <p className="text-sm text-slate-400 font-semibold mt-1.5 uppercase">Siswa</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SharedHeader />
 
       <main className="p-10 max-w-[1600px] mx-auto space-y-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
