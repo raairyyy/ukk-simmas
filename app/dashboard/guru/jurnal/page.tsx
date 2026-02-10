@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/table"
 
 export default function GuruJurnalPage() {
+   
   return (
     <>
       {/* Header Page */}

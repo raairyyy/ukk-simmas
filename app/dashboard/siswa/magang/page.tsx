@@ -17,33 +17,47 @@ export default function StatusMagangSiswa() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchProfileAndMagang()
-  }, [])
-
-  const fetchProfileAndMagang = async () => {
-    setLoading(true)
-    try {
-      const profileRes = await fetch("/api/auth/me")
-      const profileJson = await profileRes.json()
-      setUserData(profileJson.user)
-
-      const magangRes = await fetch("/api/magang")
-      const magangJson = await magangRes.json()
-      
-      const myMagang = magangJson.data.find((m: any) => m.siswa_id === profileJson.user.id)
-      setMagangData(myMagang)
-    } catch (err) {
-      console.error("Gagal mengambil data:", err)
-    } finally {
+useEffect(() => {
+  fetch("/api/siswa/magang")
+    .then(res => res.json())
+    .then(data => {
+      setMagangData(data.data) // data bisa object atau null
       setLoading(false)
-    }
-  }
+    })
+}, [])
+
 
   const handleLogout = async () => {
     const res = await fetch("/api/auth/logout", { method: "POST" })
     if (res.ok) window.location.href = "/login"
   }
+  
+function InfoField({
+  label,
+  value,
+  uppercase = false,
+}: {
+  label: string
+  value?: string | null
+  uppercase?: boolean
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.15em]">
+        {label}
+      </p>
+      <p
+        className={`text-xl font-bold min-h-[28px] ${
+          uppercase ? "uppercase" : ""
+        } ${
+          value && value !== "-" ? "text-slate-700" : "text-slate-300"
+        }`}
+      >
+        {value || "-"}
+      </p>
+    </div>
+  )
+}
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -61,97 +75,84 @@ export default function StatusMagangSiswa() {
             <CardContent className="p-12 space-y-14">
               
               {/* Seksi 1: Data Magang (Siswa) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20 gap-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20 gap-y-12">
                 <div className="space-y-10">
-                  <div className="flex items-center gap-3 text-[#00A9D8] mb-2">
-                    <div className="p-2 bg-blue-50 rounded-lg"><User size={20} strokeWidth={2.5} /></div>
-                    <h3 className="font-bold text-xl text-slate-800 tracking-tight">Data Magang</h3>
+                  <div className="flex items-center gap-3 text-[#00A9D8]">
+                    <div className="p-2 bg-blue-50 rounded-lg">
+                      <User size={20} strokeWidth={2.5} />
+                    </div>
+                    <h3 className="font-bold text-xl text-slate-800 tracking-tight">
+                      Data Magang
+                    </h3>
                   </div>
-                  
+
                   <div className="space-y-8 ml-2">
-                    <div>
-                      <p className="text-[13px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">Nama Siswa</p>
-                      <p className="text-xl font-bold text-slate-700">{magangData.siswa?.name || "Ahmad Rizki"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[13px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">Kelas</p>
-                      <p className="text-xl font-bold text-slate-700">{magangData.siswa?.kelas || "XII RPL 1"}</p>
-                    </div>
+                    <InfoField label="Nama Siswa" value={magangData?.siswa?.nama} />
+                    <InfoField label="Kelas" value={magangData?.siswa?.kelas} />
                   </div>
                 </div>
 
-                <div className="space-y-10 pt-12 md:pt-16">
-                  <div className="space-y-8 ml-2">
-                    <div>
-                      <p className="text-[13px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">NIS</p>
-                      <p className="text-xl font-bold text-slate-700">{magangData.siswa?.nis || "2024001"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[13px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-2">Jurusan</p>
-                      <p className="text-xl font-bold text-slate-700">{magangData.siswa?.jurusan || "Rekayasa Perangkat Lunak"}</p>
-                    </div>
-                  </div>
+                <div className="space-y-8 ml-2 pt-10 md:pt-14">
+                  <InfoField label="NIS" value={magangData?.siswa?.nis} />
+                  <InfoField label="Jurusan" value={magangData?.siswa?.jurusan} />
                 </div>
               </div>
+
 
               {/* Seksi 2: Informasi Perusahaan */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20 gap-y-10 border-t border-slate-100 pt-12">
-                <div className="space-y-10 ml-2">
-                  <div className="space-y-8">
-                    <div>
-                      <div className="flex items-center gap-2 text-slate-400 mb-2">
-                        <Building2 size={16} />
-                        <p className="text-[13px] font-bold uppercase tracking-[0.15em]">Nama Perusahaan</p>
-                      </div>
-                      <p className="text-xl font-bold text-slate-700">{magangData.dudi?.nama_perusahaan || "PT Kreatif Teknologi"}</p>
-                    </div>
-                    
-                    <div>
-                      <div className="flex items-center gap-2 text-slate-400 mb-2">
-                        <Calendar size={16} />
-                        <p className="text-[13px] font-bold uppercase tracking-[0.15em]">Periode Magang</p>
-                      </div>
-                      <p className="text-xl font-bold text-slate-700 uppercase tracking-tight">
-                        1 Feb 2024 s.d 1 Mei 2024
-                      </p>
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20 gap-y-12 border-t border-slate-100 pt-12">
+                <div className="space-y-8 ml-2">
+                  <InfoField
+                    label="Nama Perusahaan"
+                    value={magangData?.dudi?.nama_perusahaan}
+                  />
+
+                  <InfoField
+                    label="Periode Magang"
+                    uppercase
+                    value={
+                      magangData?.tanggal_mulai && magangData?.tanggal_selesai
+                        ? `${new Date(magangData.tanggal_mulai).toLocaleDateString(
+                            "id-ID"
+                          )} s.d ${new Date(
+                            magangData.tanggal_selesai
+                          ).toLocaleDateString("id-ID")}`
+                        : "-"
+                    }
+                  />
                 </div>
 
-                <div className="space-y-10 ml-2">
-                  <div className="space-y-8">
-                    <div>
-                      <div className="flex items-center gap-2 text-slate-400 mb-2">
-                        <MapPin size={16} />
-                        <p className="text-[13px] font-bold uppercase tracking-[0.15em]">Alamat Perusahaan</p>
-                      </div>
-                      <p className="text-xl font-bold text-slate-700">{magangData.dudi?.alamat || "Jakarta"}</p>
-                    </div>
-                    
-                    <div>
-                      <div className="flex items-center gap-2 text-slate-400 mb-2">
-                        <CheckCircle2 size={16} />
-                        <p className="text-[13px] font-bold uppercase tracking-[0.15em]">Status</p>
-                      </div>
-                      <Badge className="bg-[#DCFCE7] text-[#166534] border-none px-4 py-1.5 rounded-lg font-bold text-sm">
-                        {magangData.status || "Aktif"}
-                      </Badge>
-                    </div>
+                <div className="space-y-8 ml-2">
+                  <InfoField
+                    label="Alamat Perusahaan"
+                    value={magangData?.dudi?.alamat}
+                  />
+
+                  <div className="space-y-2">
+                    <p className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.15em]">
+                      Status
+                    </p>
+                    <Badge className="inline-flex bg-[#DCFCE7] text-[#166534] border-none px-4 py-1.5 rounded-lg font-bold min-h-[28px]">
+                      {magangData?.status || "-"}
+                    </Badge>
                   </div>
                 </div>
               </div>
+
 
               {/* Seksi 3: Nilai Akhir */}
               <div className="border-t border-slate-100 pt-12 ml-2">
                 <div className="flex items-center gap-2 text-slate-400 mb-3">
                   <Star size={18} fill="currentColor" className="text-slate-300" />
-                  <p className="text-[13px] font-bold uppercase tracking-[0.15em]">Nilai Akhir</p>
+                  <p className="text-[13px] font-bold uppercase tracking-[0.15em]">
+                    Nilai Akhir
+                  </p>
                 </div>
-                <h2 className="text-[96px] font-black text-slate-800 leading-none tracking-tighter">
-                  {magangData.nilai_akhir || "88"}
+
+                <h2 className="text-[88px] md:text-[96px] font-black text-slate-800 leading-none">
+                  {magangData?.nilai_akhir ?? "-"}
                 </h2>
               </div>
-
             </CardContent>
           </Card>
         ) : (
