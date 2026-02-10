@@ -35,8 +35,11 @@ export default function SiswaDudiList() {
   const [selectedDudi, setSelectedDudi] = useState<Dudi | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   
+  
   // Toast State
-  const [showToast, setShowToast] = useState(false)
+const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState("") // <--- INI YANG HILANG
+  const [toastType, setToastType] = useState<"success" | "error">("success")  
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [userData, setUserData] = useState<any>(null)
 
@@ -51,37 +54,89 @@ export default function SiswaDudiList() {
     setUserData(data.user)
   }
 
-  const fetchDudi = async () => {
+const fetchDudi = async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/dudi")
-      const json = await res.json()
-      if (res.ok) {
-        // Simulasi data tambahan yang tidak ada di API Dudi standar
-        const enhancedData = json.data.map((d: any) => ({
-          ...d,
-          kuota_total: 12,
-          kuota_terisi: d.total_siswa_magang || 0,
-          bidang_usaha: "Teknologi Informasi",
-          deskripsi: "Perusahaan ini bergerak di bidang pengembangan software dan solusi digital.",
-          status_magang: d.id === 1 ? "menunggu" : "tersedia" // Contoh simulasi status
-        }))
+      // Panggil API DUDI dan API SISWA MAGANG (Riwayat)
+      // Gunakan { cache: 'no-store' } agar data selalu fresh setelah daftar
+      const [resDudi, resMe] = await Promise.all([
+        fetch("/api/dudi", { cache: "no-store" }),
+        fetch("/api/siswa/magang", { cache: "no-store" }) // ✅ URL BENAR
+      ])
+
+      const jsonDudi = await resDudi.json()
+      
+      // Handle jika API siswa error atau belum ada data
+      let myApplications: any[] = []
+      if (resMe.ok) {
+        const jsonMe = await resMe.json()
+        myApplications = jsonMe.data || []
+      }
+
+      if (resDudi.ok) {
+        const enhancedData = jsonDudi.data.map((d: any) => {
+          // Cek status pendaftaran siswa di perusahaan ini
+          // myApplications berisi array [{dudi_id: 1, status: 'pending'}, ...]
+          const myApp = myApplications.find((m: any) => m.dudi_id === d.id)
+          
+          let status = "tersedia"
+
+          if (myApp) {
+             if (myApp.status === "pending") status = "menunggu"
+             else if (myApp.status === "berlangsung" || myApp.status === "diterima") status = "berlangsung"
+             else if (myApp.status === "ditolak") status = "tersedia" // Boleh daftar lagi jika ditolak
+          }
+
+          return {
+            ...d,
+            kuota_total: d.kuota_total || 12,
+            kuota_terisi: d.total_siswa_magang || 0,
+            status_magang: status 
+          }
+        })
         setDudiList(enhancedData)
       }
     } catch (err) {
-      console.error(err)
+      console.error("Gagal memuat data:", err)
     } finally {
       setLoading(false)
     }
   }
+// ... kode lainnya ...
 
-  const handleDaftar = async (id: number) => {
-    // Logika pendaftaran ke API Magang
-    setShowToast(true)
-    setIsDetailOpen(false)
-    setTimeout(() => setShowToast(false), 4000)
-    fetchDudi() // Refresh data
+const handleDaftar = async (id: number) => {
+    try {
+      const res = await fetch("/api/siswa/magang", { // ✅ URL BENAR (POST)
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dudi_id: id })
+      })
+
+      const json = await res.json()
+
+      if (res.ok) {
+        setToastType("success")
+        setToastMessage("Pendaftaran berhasil! Menunggu verifikasi guru.")
+        setShowToast(true)
+        setIsDetailOpen(false)
+        await fetchDudi() // Refresh data
+      } else {
+        // 🛑 TANGKAP ERROR DARI BACKEND DISINI
+        setToastType("error")
+        // Backend mengirim: { error: "Batas maksimal pendaftaran tercapai..." }
+        setToastMessage(json.error || "Gagal mendaftar magang") 
+        setShowToast(true)
+      }
+    } catch (error) {
+      setToastType("error")
+      setToastMessage("Terjadi kesalahan sistem")
+      setShowToast(true)
+    } finally {
+      setTimeout(() => setShowToast(false), 4000)
+    }
   }
+
+  // ... kode lainnya ...
 
   const filteredDudi = dudiList.filter(d =>
     d.nama_perusahaan.toLowerCase().includes(search.toLowerCase()) ||
@@ -293,4 +348,8 @@ export default function SiswaDudiList() {
       </Dialog>
     </div>
   )
+}
+
+function setToastType(arg0: string) {
+  throw new Error("Function not implemented.")
 }
