@@ -50,19 +50,28 @@ export default function JurnalHarianPage() {
     const [uploading, setUploading] = useState(false);
 
   // Form State
-  const [formData, setFormData] = useState({
-    tanggal: new Date().toISOString().split('T')[0],
-    kegiatan: "",
-    kendala: "",
-    file: null as any
-  })
+const [formData, setFormData] = useState({
+  tanggal: getLocalDateString(), // Menggunakan tanggal lokal
+  kegiatan: "",
+  kendala: "",
+  file: null as any
+})
+const resetForm = () => {
+    setFormData({
+      tanggal: getLocalDateString(), // Reset ke tanggal hari ini
+      kegiatan: "",
+      kendala: "",
+      file: null
+    });
+    setUploading(false);
+  };
 
   useEffect(() => {
     fetch("/api/auth/me").then(res => res.json()).then(data => setUserData(data.user))
     fetchJurnal()
   }, [])
 
-  const fetchJurnal = async () => {
+const fetchJurnal = async () => {
     setLoading(true)
     const res = await fetch("/api/logbook")
     const data = await res.json()
@@ -70,8 +79,8 @@ export default function JurnalHarianPage() {
     if (res.ok) {
       setJurnals(data.data)
 
-      // 🔥 CEK JURNAL HARI INI
-      const today = new Date().toISOString().split("T")[0]
+      // GUNAKAN HELPER LOKAL
+      const today = getLocalDateString(); 
 
       const existsToday = data.data.some(
         (jurnal: any) => jurnal.tanggal === today
@@ -79,9 +88,8 @@ export default function JurnalHarianPage() {
 
       setHasTodayJurnal(existsToday)
     }
-
     setLoading(false)
-  }
+}
 
 
   const supabase = createClient(
@@ -187,6 +195,7 @@ const handleUpdateJurnal = async () => {
       kegiatan: formData.kegiatan,
       kendala: formData.kendala,
       file: formData.file,
+      status_verifikasi: 'pending'
     }),
   });
 
@@ -407,7 +416,8 @@ const handleDownloadFile = async (filePath: string) => {
               <Eye size={16} />
             </button>
 
-            {jurnal.status_verifikasi === "pending" && (
+            {/* Tombol EDIT (Muncul jika Pending ATAU Ditolak) */}
+            {(jurnal.status_verifikasi === "pending" || jurnal.status_verifikasi === "ditolak") && (
               <button
                 onClick={() => {
                   setSelectedJurnal(jurnal);
@@ -420,6 +430,7 @@ const handleDownloadFile = async (filePath: string) => {
                   setIsEditOpen(true);
                 }}
                 className="hover:text-amber-600"
+                title="Edit Jurnal" // Tooltip bantuan
               >
                 <Pencil size={16} />
               </button>
@@ -719,21 +730,21 @@ const handleDownloadFile = async (filePath: string) => {
                 <div className="flex items-center justify-between p-4 bg-green-50/50 rounded-2xl border border-green-100">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white rounded-lg text-green-600 shadow-sm"><FileText size={18} /></div>
-<p className="text-sm font-bold text-green-800 truncate max-w-[250px]">
-  {selectedJurnal.file
-    ? selectedJurnal.file.split("/").pop()
-    : "Tidak ada file"}
-</p>
-                  </div>
-{selectedJurnal.file && (
-  <Button
-    size="sm"
-    onClick={() => handleDownloadFile(selectedJurnal.file)}
-    className="bg-green-600 hover:bg-green-700 text-white rounded-lg h-9 px-4 font-bold transition-all shadow-sm shadow-green-100 uppercase text-[10px]"
-  >
-    Unduh
-  </Button>
-)}
+                    <p className="text-sm font-bold text-green-800 truncate max-w-[250px]">
+                      {selectedJurnal.file
+                        ? selectedJurnal.file.split("/").pop()
+                        : "Tidak ada file"}
+                    </p>
+                                      </div>
+                    {selectedJurnal.file && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleDownloadFile(selectedJurnal.file)}
+                        className="bg-green-600 hover:bg-green-700 text-white rounded-lg h-9 px-4 font-bold transition-all shadow-sm shadow-green-100 uppercase text-[10px]"
+                      >
+                        Unduh
+                      </Button>
+                    )}
 
                 </div>
               </section>
@@ -776,6 +787,16 @@ function StatCard({ title, value, sub, icon }: any) {
   )
 }
 
-function resetForm() {
-  // Fungsi dummy, bisa ditambahkan logika reset state form di sini
+
+// Helper untuk mendapatkan tanggal lokal format YYYY-MM-DD
+function getLocalDateString() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Tambah 0 di depan jika < 10
+  const day = String(date.getDate()).padStart(2, '0');       // Tambah 0 di depan jika < 10
+  return `${year}-${month}-${day}`;
+}
+
+function setUploading(arg0: boolean) {
+  throw new Error("Function not implemented.")
 }

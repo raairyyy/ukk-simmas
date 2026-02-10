@@ -100,10 +100,7 @@ export async function PUT(
       .single();
 
     if (!siswa) {
-      return NextResponse.json(
-        { error: "Siswa tidak ditemukan" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Siswa tidak ditemukan" }, { status: 404 });
     }
 
     // 2️⃣ Ambil magang
@@ -114,13 +111,10 @@ export async function PUT(
       .single();
 
     if (!magang) {
-      return NextResponse.json(
-        { error: "Magang tidak ditemukan" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Magang tidak ditemukan" }, { status: 404 });
     }
 
-    // 3️⃣ Update jurnal (VALIDASI PEMILIK DATA)
+    // 3️⃣ Update jurnal (PERBAIKAN DISINI)
     const { error } = await supabase
       .from("logbook")
       .update({
@@ -128,10 +122,14 @@ export async function PUT(
         kegiatan: body.kegiatan,
         kendala: body.kendala || null,
         file: body.file || null,
+        // 👇 WAJIB: Reset status jadi 'pending' setiap kali edit
+        // Agar guru tahu siswa sudah memperbaiki jurnalnya
+        status_verifikasi: "pending" 
       })
       .eq("id", jurnalId)
       .eq("magang_id", magang.id)
-      .eq("status_verifikasi", "pending"); // ❗ hanya boleh edit pending
+      // 👇 PERBAIKAN FILTER: Izinkan edit jika status 'pending' ATAU 'ditolak'
+      .in("status_verifikasi", ["pending", "ditolak"]); 
 
     if (error) {
       console.error("UPDATE LOGBOOK ERROR:", error);

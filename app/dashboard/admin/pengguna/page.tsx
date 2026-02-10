@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import {
   Users, Plus, Search, Pencil, Trash2, User, Mail, CheckCircle2,
-  Lock, Bell, LogOut, XCircle, Eye, EyeOff
+  Lock, Bell, LogOut, XCircle, Eye, EyeOff,
+  GraduationCap
 } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
 import { Card } from "@/components/ui/card"
@@ -30,6 +31,8 @@ export default function UserManagement() {
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
 
+  const [guruList, setGuruList] = useState<any[]>([])
+
   // Modal States
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -45,28 +48,40 @@ export default function UserManagement() {
   const [toastMessage, setToastMessage] = useState("")
 
   // Form States
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "siswa",
     password: "",
     confirmPassword: "",
-    verifiedStatus: "unverified"
+    verifiedStatus: "unverified",
+    // Field Khusus Siswa
+    nis: "",
+    kelas: "",
+    jurusan: "",
+    guru_id: ""
   })
 
   // LOGIKA VALIDASI: Tombol aktif hanya jika semua field terisi
-  const isUserFormValid = 
+const isUserFormValid = 
     formData.name.trim() !== "" &&
     formData.email.trim() !== "" &&
     formData.password.trim() !== "" &&
     formData.confirmPassword.trim() !== "" &&
-    formData.password === formData.confirmPassword;
+    formData.password === formData.confirmPassword &&
+    // Validasi tambahan jika role siswa
+    (formData.role === 'siswa' ? (formData.nis !== "" && formData.kelas !== "" && formData.jurusan !== "") : true);
 
   useEffect(() => {
-    fetch("/api/auth/me").then(res => res.json()).then(res => setUserData(res.user))
+    fetch("/api/auth/me").then(res => res.json()).then(res => setUserData(res.user)) // Jika ada state setUserData
     fetchUsers()
+    fetchGurus() // Fetch data guru saat component mount
   }, [])
 
+  const fetchGurus = async () => {
+    const { data } = await supabase.from("guru").select("id, nama")
+    if (data) setGuruList(data)
+  }
   const handleLogout = async () => {
     const res = await fetch("/api/auth/logout", { method: "POST" })
     if (res.ok) window.location.href = "/login"
@@ -85,7 +100,7 @@ export default function UserManagement() {
     setTimeout(() => setShowToast(false), 3000)
   }
 
-  const handleSaveAdd = async () => {
+const handleSaveAdd = async () => {
     if (!isUserFormValid) return;
     try {
       const res = await fetch("/api/pengguna", {
@@ -96,15 +111,24 @@ export default function UserManagement() {
           email: formData.email,
           role: formData.role,
           password: formData.password,
-          verified: formData.verifiedStatus === "verified"
+          verified: formData.verifiedStatus === "verified",
+          // Kirim data siswa jika role siswa
+          ...(formData.role === 'siswa' && {
+            nis: formData.nis,
+            kelas: formData.kelas,
+            jurusan: formData.jurusan,
+            guru_id: formData.guru_id
+          })
         }),
       });
+      
       const result = await res.json();
+      
       if (res.ok) {
         setIsAddOpen(false);
         fetchUsers(); 
         resetForm();
-        triggerToast("Data User berhasil ditambahkan")
+        triggerToast("User berhasil ditambahkan")
       } else {
         alert(result.error);
       }
@@ -141,8 +165,11 @@ export default function UserManagement() {
     }
   }
 
-  const resetForm = () => {
-    setFormData({ name: "", email: "", role: "siswa", password: "", confirmPassword: "", verifiedStatus: "unverified" })
+const resetForm = () => {
+    setFormData({ 
+      name: "", email: "", role: "siswa", password: "", confirmPassword: "", verifiedStatus: "unverified",
+      nis: "", kelas: "", jurusan: "", guru_id: ""
+    })
     setShowPassword(false)
     setShowConfirmPassword(false)
   }
@@ -279,21 +306,20 @@ export default function UserManagement() {
       </div>
 
       {/* --- MODAL TAMBAH USER --- */}
-      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="sm:max-w-[600px] rounded-[24px]">
+<Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent className="sm:max-w-[600px] rounded-[24px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Tambah User Baru</DialogTitle>
-            <p className="text-sm text-slate-500 font-medium">Lengkapi semua informasi yang diperlukan</p>
+            <p className="text-sm text-slate-500 font-medium">Lengkapi informasi pengguna</p>
           </DialogHeader>
+          
           <div className="grid gap-6 py-2">
+            {/* Input Standar */}
             <div className="grid gap-2">
               <Label className="font-bold text-slate-700">Nama Lengkap <span className="text-red-500">*</span></Label>
               <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Masukkan nama lengkap" className="h-12 rounded-xl bg-slate-50/50" />
             </div>
-            <div className="grid gap-2">
-              <Label className="font-bold text-slate-700">Email <span className="text-red-500">*</span></Label>
-              <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="Contoh: user@email.com" className="h-12 rounded-xl bg-slate-50/50" />
-            </div>
+            
             <div className="grid gap-2">
               <Label className="font-bold text-slate-700">Role <span className="text-red-500">*</span></Label>
               <Select value={formData.role} onValueChange={(val) => setFormData({...formData, role: val})}>
@@ -305,22 +331,75 @@ export default function UserManagement() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* --- INPUT KHUSUS ROLE SISWA --- */}
+            {formData.role === 'siswa' && (
+              <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center gap-2 text-blue-700 font-bold text-sm mb-1">
+                  <GraduationCap size={18} /> Data Akademik Siswa
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-600 uppercase">NIS <span className="text-red-500">*</span></Label>
+                    <Input value={formData.nis} onChange={(e) => setFormData({...formData, nis: e.target.value})} placeholder="Nomor Induk" className="h-11 rounded-lg bg-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-slate-600 uppercase">Kelas <span className="text-red-500">*</span></Label>
+                    <Input value={formData.kelas} onChange={(e) => setFormData({...formData, kelas: e.target.value})} placeholder="Contoh: XII RPL 1" className="h-11 rounded-lg bg-white" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-600 uppercase">Jurusan <span className="text-red-500">*</span></Label>
+                  <Select value={formData.jurusan} onValueChange={(val) => setFormData({...formData, jurusan: val})}>
+                    <SelectTrigger className="h-11 rounded-lg bg-white"><SelectValue placeholder="Pilih Jurusan" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Rekayasa Perangkat Lunak">Rekayasa Perangkat Lunak</SelectItem>
+                      <SelectItem value="Teknik Komputer Jaringan">Teknik Komputer Jaringan</SelectItem>
+                      <SelectItem value="Multimedia">Multimedia</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-600 uppercase">Guru Pembimbing (Opsional)</Label>
+                  <Select value={formData.guru_id} onValueChange={(val) => setFormData({...formData, guru_id: val})}>
+                    <SelectTrigger className="h-11 rounded-lg bg-white"><SelectValue placeholder="Pilih Guru Pembimbing" /></SelectTrigger>
+                    <SelectContent>
+                      {guruList.map((guru) => (
+                        <SelectItem key={guru.id} value={guru.id.toString()}>{guru.nama}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            {/* ------------------------------- */}
+
+            <div className="grid gap-2">
+              <Label className="font-bold text-slate-700">Email <span className="text-red-500">*</span></Label>
+              <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="user@email.com" className="h-12 rounded-xl bg-slate-50/50" />
+            </div>
+
             <div className="grid gap-2">
               <Label className="font-bold text-slate-700">Password <span className="text-red-500">*</span></Label>
               <div className="relative">
-                <Input type={showPassword ? "text" : "password"} value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Masukkan password (min. 6 karakter)" className="h-12 rounded-xl bg-slate-50/50 pr-10" />
+                <Input type={showPassword ? "text" : "password"} value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="h-12 rounded-xl bg-slate-50/50 pr-10" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
             </div>
+
             <div className="grid gap-2">
               <Label className="font-bold text-slate-700">Konfirmasi Password <span className="text-red-500">*</span></Label>
               <div className="relative">
-                <Input type={showConfirmPassword ? "text" : "password"} value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} placeholder="Ulangi password" className="h-12 rounded-xl bg-slate-50/50 pr-10" />
+                <Input type={showConfirmPassword ? "text" : "password"} value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} className="h-12 rounded-xl bg-slate-50/50 pr-10" />
                 <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">{showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
             </div>
+
             <div className="grid gap-2">
-              <Label className="font-bold text-slate-700">Email Verification</Label>
+              <Label className="font-bold text-slate-700">Status Verifikasi</Label>
               <Select value={formData.verifiedStatus} onValueChange={(val) => setFormData({...formData, verifiedStatus: val})}>
                 <SelectTrigger className="h-12 rounded-xl bg-slate-50/50"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -330,10 +409,9 @@ export default function UserManagement() {
               </Select>
             </div>
           </div>
+
           <DialogFooter className="gap-3 pt-2">
             <Button variant="outline" onClick={() => setIsAddOpen(false)} className="h-12 px-8 rounded-xl font-bold text-slate-600 flex-1">Batal</Button>
-            
-            {/* PERBAIKAN TOMBOL SIMPAN (Sesuai Gambar 6 & 7) */}
             <Button 
               disabled={!isUserFormValid} 
               onClick={handleSaveAdd} 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import bcrypt from "bcryptjs"; // Import library-nya
+import bcrypt from "bcryptjs";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,27 +9,84 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { name, email, role, password, verified } = await req.json();
+    const body = await req.json();
+    const { 
+      name, email, role, password, verified, 
+      // Field khusus siswa (opsional)
+      nis, kelas, jurusan, guru_id 
+    } = body;
 
-    // 1. Proses Hashing Password di sini
+    // 1. Validasi Input Dasar
+    if (!name || !email || !password || !role) {
+      return NextResponse.json({ error: "Data dasar wajib diisi" }, { status: 400 });
+    }
+
+    // 2. Hash Password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // 2. Simpan ke database (Gunakan password yang sudah di-hash)
-    const { data, error } = await supabase.from("users").insert([
-      {
-        name,
-        email,
-        role,
-        password: hashedPassword, // Simpan yang sudah di-hash
-        email_verified_at: verified ? new Date().toISOString() : null,
-      },
-    ]);
+    // 3. Insert ke tabel USERS
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .insert([
+        {
+          name,
+          email,
+          role,
+          password: hashedPassword,
+          email_verified_at: verified ? new Date().toISOString() : null,
+        },
+      ])
+      .select()
+      .single();
 
-    if (error) throw error;
+    if (userError) throw userError;
+
+    // 4. Jika Role SISWA, Insert ke tabel SISWA & MAGANG (Untuk Guru Pembimbing)
+    if (role === 'siswa') {
+      // Validasi input siswa
+      if (!nis || !kelas || !jurusan) {
+        // Rollback manual (hapus user yg baru dibuat jika data siswa kurang)
+        await supabase.from("users").delete().eq("id", user.id);
+        return NextResponse.json({ error: "Data siswa (NIS, Kelas, Jurusan) wajib diisi" }, { status: 400 });
+      }
+
+      // Insert ke tabel SISWA
+      const { data: siswaData, error: siswaError } = await supabase
+        .from("siswa")
+        .insert([{
+          user_id: user.id,
+          nama: name,
+          nis,
+          kelas,
+          jurusan
+        }])
+        .select()
+        .single();
+
+      if (siswaError) {
+        await supabase.from("users").delete().eq("id", user.id); // Rollback
+        throw siswaError;
+      }
+
+      // Jika ada Guru Pembimbing, buat relasi di tabel MAGANG
+      // (Asumsi: hubungan siswa-guru ada di tabel magang)
+      if (guru_id) {
+        const { error: magangError } = await supabase
+          .from("magang")
+          .insert([{
+            siswa_id: siswaData.id,
+            guru_id: parseInt(guru_id), // Pastikan format integer
+            status: 'pending' // Default status
+          }]);
+          
+        if (magangError) console.error("Gagal set guru pembimbing:", magangError);
+      }
+    }
 
     return NextResponse.json({ message: "User berhasil dibuat" }, { status: 201 });
   } catch (error: any) {
+    console.error("API Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

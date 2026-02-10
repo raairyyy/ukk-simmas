@@ -411,6 +411,7 @@ export default function GuruMagangPage() {
                             <SelectItem value="selesai">Selesai</SelectItem>
                             <SelectItem value="pending">Pending</SelectItem>
                             <SelectItem value="dibatalkan">Dibatalkan</SelectItem>
+                            <SelectItem value="ditolak">Ditolak</SelectItem>
                          </SelectContent>
                       </Select>
                    </div>
@@ -499,6 +500,7 @@ function getDisplayStatus(status: string) {
     case "selesai": return "Selesai"
     case "pending": return "Pending"
     case "dibatalkan": return "Dibatalkan"
+    case "ditolak": return "Ditolak"
     default: return status
   }
 }
