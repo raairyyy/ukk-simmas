@@ -65,7 +65,7 @@ function InfoField({
       <SharedHeader />
 
       {/* CONTENT BODY (Gambar 28) */}
-      <main className="p-10 max-w-[1400px] mx-auto space-y-10">
+      <main className="p-10 max-w-[1900px] mx-auto space-y-10">
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Status Magang Saya</h1>
 
         {loading ? (

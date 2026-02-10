@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { SharedHeader } from "@/components/shared-header"
+import { useRouter } from "next/navigation"
 import {
   Table,
   TableBody,
@@ -30,6 +31,8 @@ import {
 
 export default function GuruJurnalPage() {
   const [data, setData] = useState<any[]>([])
+  const router = useRouter()
+
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
