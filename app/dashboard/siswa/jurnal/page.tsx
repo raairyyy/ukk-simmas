@@ -20,6 +20,7 @@ import { createClient } from "@supabase/supabase-js"
 import { SharedHeader } from "@/components/shared-header"
 
 export default function JurnalHarianPage() {
+  const [hasTodayJurnal, setHasTodayJurnal] = useState(false)
   const [jurnals, setJurnals] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [userData, setUserData] = useState<any>(null)
@@ -61,13 +62,27 @@ export default function JurnalHarianPage() {
     fetchJurnal()
   }, [])
 
-  const fetchJurnal = async () => {
-    setLoading(true)
-    const res = await fetch("/api/logbook")
-    const data = await res.json()
-    if (res.ok) setJurnals(data.data)
-    setLoading(false)
+const fetchJurnal = async () => {
+  setLoading(true)
+  const res = await fetch("/api/logbook")
+  const data = await res.json()
+
+  if (res.ok) {
+    setJurnals(data.data)
+
+    // 🔥 CEK JURNAL HARI INI
+    const today = new Date().toISOString().split("T")[0]
+
+    const existsToday = data.data.some(
+      (jurnal: any) => jurnal.tanggal === today
+    )
+
+    setHasTodayJurnal(existsToday)
   }
+
+  setLoading(false)
+}
+
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -218,18 +233,47 @@ const handleUpdateJurnal = async () => {
         </div>
 
         {/* REMINDER JURNAL (Gambar 18) */}
-        <div className="bg-[#FFF9E6] border border-[#FFD966] p-6 rounded-[24px] flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-[#FFB800]/10 text-[#FFB800] rounded-2xl">
-              <FileText size={24} />
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-800">Jangan Lupa Jurnal Hari Ini!</h4>
-              <p className="text-sm text-slate-600">Anda belum membuat jurnal untuk hari ini. Dokumentasikan kegiatan magang Anda sekarang.</p>
-            </div>
-          </div>
-          <Button onClick={() => setIsAddOpen(true)} className="bg-[#FFB800] hover:bg-[#E6A600] text-white font-bold rounded-xl px-6 transition-all hover:scale-105">Buat Sekarang</Button>
-        </div>
+{/* REMINDER / SUCCESS JURNAL */}
+{hasTodayJurnal ? (
+  <div className="bg-green-50 border border-green-200 p-6 rounded-[24px] flex items-center justify-between shadow-sm">
+    <div className="flex items-center gap-4">
+      <div className="p-3 bg-green-500/10 text-green-600 rounded-2xl">
+        <CheckCircle2 size={24} />
+      </div>
+      <div>
+        <h4 className="font-bold text-green-800">
+          Jurnal Hari Ini Sudah Selesai!
+        </h4>
+        <p className="text-sm text-green-700">
+          Terima kasih telah mendokumentasikan kegiatan magang Anda.
+        </p>
+      </div>
+    </div>
+  </div>
+) : (
+  <div className="bg-[#FFF9E6] border border-[#FFD966] p-6 rounded-[24px] flex items-center justify-between shadow-sm">
+    <div className="flex items-center gap-4">
+      <div className="p-3 bg-[#FFB800]/10 text-[#FFB800] rounded-2xl">
+        <FileText size={24} />
+      </div>
+      <div>
+        <h4 className="font-bold text-slate-800">
+          Jangan Lupa Jurnal Hari Ini!
+        </h4>
+        <p className="text-sm text-slate-600">
+          Anda belum membuat jurnal untuk hari ini. Dokumentasikan sekarang.
+        </p>
+      </div>
+    </div>
+    <Button
+      onClick={() => setIsAddOpen(true)}
+      className="bg-[#FFB800] hover:bg-[#E6A600] text-white font-bold rounded-xl px-6"
+    >
+      Buat Sekarang
+    </Button>
+  </div>
+)}
+
 
         {/* STAT CARDS (Gambar 18) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
