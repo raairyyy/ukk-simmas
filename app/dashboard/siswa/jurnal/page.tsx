@@ -35,6 +35,15 @@ export default function JurnalHarianPage() {
   // Toast State
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
+    const showToastMessage = (message: string, duration = 3000) => {
+    setToastMessage(message);
+    setShowToast(true);
+
+    setTimeout(() => {
+      setShowToast(false);
+    }, duration);
+  };
+
 
     // Di dalam komponen JurnalHarianPage, tambahkan fungsi ini:
     const [uploading, setUploading] = useState(false);
@@ -70,20 +79,59 @@ export default function JurnalHarianPage() {
     if (res.ok) window.location.href = "/login"
   }
 
-  const handleSave = async () => {
-    const res = await fetch("/api/logbook", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData)
-    })
-    if (res.ok) {
-      setIsAddOpen(false)
-      fetchJurnal()
-      setToastMessage("Jurnal berhasil ditambahkan")
-      setShowToast(true)
-      setTimeout(() => setShowToast(false), 3000)
-    }
+const handleSave = async () => {
+  if (uploading) {
+    alert("Tunggu upload file selesai");
+    return;
   }
+
+  const payload = {
+    tanggal: formData.tanggal,
+    kegiatan: formData.kegiatan,
+    kendala: formData.kendala || null,
+    file: formData.file || null
+  };
+
+  const res = await fetch("/api/logbook", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    showToastMessage(data.error || "Gagal menyimpan jurnal", 4000);
+    return;
+  }
+
+  setIsAddOpen(false);
+  fetchJurnal();
+  showToastMessage("Jurnal berhasil ditambahkan", 3000);
+};
+
+//fungsi delete jurnal pada siswa
+const handleDeleteJurnal = async () => {
+  if (!selectedJurnal) return;
+
+  const res = await fetch(`/api/logbook/${selectedJurnal.id}`, {
+    method: "DELETE",
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    showToastMessage(data.error || "Gagal menghapus jurnal", 4000);
+    return;
+  }
+
+  setIsConfirmOpen(false);
+  setSelectedJurnal(null);
+  fetchJurnal();
+  showToastMessage("Jurnal berhasil dihapus", 3000);
+};
+
+
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   try {
@@ -104,13 +152,40 @@ export default function JurnalHarianPage() {
 
     // Simpan path ke state formData
     setFormData({ ...formData, file: filePath });
-    setToastMessage("File berhasil diunggah");
-    setShowToast(true);
+showToastMessage("File berhasil diunggah", 2000);
   } catch (error: any) {
     alert("Gagal upload: " + error.message);
   } finally {
     setUploading(false);
   }
+};
+
+//update jurnal
+const handleUpdateJurnal = async () => {
+  if (!selectedJurnal) return;
+
+  const res = await fetch(`/api/logbook/${selectedJurnal.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      tanggal: formData.tanggal,
+      kegiatan: formData.kegiatan,
+      kendala: formData.kendala,
+      file: formData.file,
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    showToastMessage(data.error || "Gagal update jurnal", 4000);
+    return;
+  }
+
+  setIsEditOpen(false);
+  setSelectedJurnal(null);
+  fetchJurnal();
+  showToastMessage("Jurnal berhasil diperbarui", 3000);
 };
 
   return (
@@ -160,71 +235,159 @@ export default function JurnalHarianPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <StatCard title="Total Jurnal" value={jurnals.length} sub="Jurnal yang telah dibuat" icon={<FileText className="text-blue-500" />} />
           <StatCard title="Disetujui" value={jurnals.filter(j => j.status_verifikasi === 'disetujui').length} sub="Jurnal disetujui guru" icon={<CheckCircle2 className="text-green-500" />} />
-          <StatCard title="Menunggu" value={jurnals.filter(j => j.status_verifikasi === 'menunggu').length} sub="Belum diverifikasi" icon={<Clock className="text-amber-500" />} />
+          <StatCard
+            title="Pending"
+            value={jurnals.filter(j => j.status_verifikasi === 'pending').length}
+            sub="Belum diverifikasi"
+            icon={<Clock className="text-amber-500" />}
+          />
           <StatCard title="Ditolak" value={jurnals.filter(j => j.status_verifikasi === 'ditolak').length} sub="Perlu diperbaiki" icon={<XCircle className="text-red-500" />} />
         </div>
 
         {/* RIWAYAT JURNAL (Gambar 18) */}
-        <Card className="border-none shadow-sm rounded-[24px] bg-white overflow-hidden">
-          <div className="p-8 space-y-8">
-            <div className="flex items-center gap-3">
-              <Calendar className="text-[#00A9D8]" />
-              <h3 className="text-xl font-bold text-slate-800">Riwayat Jurnal</h3>
-            </div>
+<Card className="border-none shadow-sm rounded-[24px] bg-white">
+  <div className="p-8 space-y-6">
 
-            <div className="flex flex-wrap gap-4">
-              <div className="relative flex-1 min-w-[300px]">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-5" />
-                <Input placeholder="Cari kegiatan atau kendala..." className="pl-12 h-12 rounded-xl border-slate-200 focus:bg-white bg-slate-50/50" />
-              </div>
-              <Select><SelectTrigger className="w-[180px] h-12 rounded-xl"><SelectValue placeholder="Semua Status" /></SelectTrigger></Select>
-              <Select><SelectTrigger className="w-[180px] h-12 rounded-xl"><SelectValue placeholder="Semua Bulan" /></SelectTrigger></Select>
-            </div>
+    {/* TITLE */}
+    <div className="flex items-center gap-3">
+      <Calendar className="text-[#00A9D8]" />
+      <h3 className="text-xl font-bold text-slate-800">
+        Riwayat Jurnal
+      </h3>
+    </div>
 
-            <div className="space-y-4">
-              {loading ? (
-                <p className="text-center py-10 text-slate-400 font-medium">Memuat riwayat jurnal...</p>
-              ) : jurnals.length === 0 ? (
-                <div className="text-center py-16 bg-slate-50 rounded-3xl border border-dashed">
-                   <p className="text-slate-400 font-bold">Belum ada jurnal yang tercatat.</p>
-                </div>
-              ) : jurnals.map((jurnal) => (
-                <div key={jurnal.id} className="group border border-slate-100 rounded-3xl p-6 hover:bg-slate-50/50 transition-all flex items-start justify-between gap-6">
-                  <div className="flex-1 space-y-4">
-                    <div className="flex items-center gap-4">
-                      <p className="font-bold text-slate-500 min-w-[120px]">{new Date(jurnal.tanggal).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                      <Badge className={`px-3 py-1 rounded-lg font-bold border-none capitalize ${
-                        jurnal.status_verifikasi === 'disetujui' ? 'bg-green-50 text-green-600' : 
-                        jurnal.status_verifikasi === 'ditolak' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
-                      }`}>
-                        {jurnal.status_verifikasi}
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Kegiatan:</p>
-                      <p className="text-slate-700 leading-relaxed font-medium">{jurnal.kegiatan}</p>
-                    </div>
-                    {jurnal.catatan_guru && (
-                      <div className="bg-slate-100/50 p-4 rounded-2xl border border-slate-100">
-                        <p className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-1">🚩 Feedback Guru:</p>
-                        <p className="text-sm text-slate-600 italic font-medium">{jurnal.catatan_guru}</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => { setSelectedJurnal(jurnal); setIsDetailOpen(true); }} className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl"><Eye size={20} /></Button>
-                    {jurnal.status_verifikasi !== 'disetujui' && (
-                      <>
-                        <Button variant="ghost" size="icon" onClick={() => { setSelectedJurnal(jurnal); setIsEditOpen(true); }} className="text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl"><Pencil size={20} /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => { setSelectedJurnal(jurnal); setIsConfirmOpen(true); }} className="text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl"><Trash2 size={20} /></Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+    {/* SEARCH & FILTER */}
+    <div className="flex items-center justify-between gap-4">
+      <div className="relative flex-1 max-w-md">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+        <Input
+          placeholder="Cari kegiatan atau kendala..."
+          className="pl-11 h-11 rounded-xl"
+        />
+      </div>
+    </div>
+
+    {/* TABLE HEADER */}
+    <div className="grid grid-cols-[160px_1fr_160px_220px_100px] text-sm font-bold text-slate-500 border-b pb-3">
+      <div>Tanggal</div>
+      <div>Kegiatan & Kendala</div>
+      <div>Status</div>
+      <div>Feedback Guru</div>
+      <div className="text-right">Aksi</div>
+    </div>
+
+    {/* TABLE BODY */}
+    {loading ? (
+      <p className="text-center py-10 text-slate-400">
+        Memuat riwayat jurnal...
+      </p>
+    ) : jurnals.length === 0 ? (
+      <div className="text-center py-10 text-slate-400">
+        Belum ada jurnal
+      </div>
+    ) : (
+      jurnals.map((jurnal) => (
+        <div
+          key={jurnal.id}
+          className="grid grid-cols-[160px_1fr_160px_220px_100px] items-start py-4 border-b last:border-none text-sm"
+        >
+          {/* TANGGAL */}
+          <div className="font-medium text-slate-600">
+            {new Date(jurnal.tanggal).toLocaleDateString("id-ID", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
           </div>
-        </Card>
+
+          {/* KEGIATAN */}
+          <div className="text-slate-700">
+            <p className="font-semibold">Kegiatan:</p>
+            <p className="line-clamp-2">{jurnal.kegiatan}</p>
+          </div>
+
+          {/* STATUS */}
+          <div>
+            <Badge
+              className={`capitalize ${
+                jurnal.status_verifikasi === "pending"
+                  ? "bg-amber-100 text-amber-700"
+                  : jurnal.status_verifikasi === "disetujui"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {jurnal.status_verifikasi === "pending"
+                ? "Menunggu Verifikasi"
+                : jurnal.status_verifikasi}
+            </Badge>
+          </div>
+
+          {/* FEEDBACK */}
+          <div className="text-slate-500 text-xs">
+            {jurnal.catatan_guru ? (
+              <div className="bg-slate-50 border rounded-lg p-2">
+                <p className="font-bold">Catatan Guru:</p>
+                <p>{jurnal.catatan_guru}</p>
+              </div>
+            ) : (
+              "Belum ada feedback"
+            )}
+          </div>
+
+          {/* AKSI */}
+          <div className="flex justify-end gap-3 text-slate-400">
+            <button
+              onClick={() => {
+                setSelectedJurnal(jurnal);
+                setIsDetailOpen(true);
+              }}
+              className="hover:text-blue-600"
+            >
+              <Eye size={16} />
+            </button>
+
+            {jurnal.status_verifikasi === "pending" && (
+              <button
+                onClick={() => {
+                  setSelectedJurnal(jurnal);
+                  setFormData({
+                    tanggal: jurnal.tanggal,
+                    kegiatan: jurnal.kegiatan,
+                    kendala: jurnal.kendala || "",
+                    file: jurnal.file,
+                  });
+                  setIsEditOpen(true);
+                }}
+                className="hover:text-amber-600"
+              >
+                <Pencil size={16} />
+              </button>
+            )}
+
+            {(jurnal.status_verifikasi === "pending" ||
+              jurnal.status_verifikasi === "ditolak") && (
+              <button
+                onClick={() => {
+                  setSelectedJurnal(jurnal);
+                  setIsConfirmOpen(true);
+                }}
+                className="hover:text-red-600"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+</Card>
+
+
+
+
       </main>
 
       {/* MODAL TAMBAH JURNAL (Gambar 19) */}
@@ -320,6 +483,143 @@ export default function JurnalHarianPage() {
   </DialogContent>
 </Dialog>
 
+<Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+  <DialogContent className="max-w-3xl rounded-[32px] p-0 overflow-hidden border-none bg-white">
+    
+    {/* HEADER */}
+    <div className="p-8 pb-4 border-b border-slate-100">
+      <DialogHeader>
+        <DialogTitle className="text-2xl font-bold text-slate-800">
+          Edit Jurnal Harian
+        </DialogTitle>
+        <p className="text-sm text-slate-500">
+          Perbarui dokumentasi kegiatan magang Anda
+        </p>
+      </DialogHeader>
+    </div>
+
+    {/* CONTENT */}
+    <div className="p-8 pt-4 overflow-y-auto max-h-[70vh] space-y-6">
+
+      {/* PANDUAN */}
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+        <p className="text-sm font-bold text-blue-700 mb-2">
+          ℹ️ Panduan Penulisan Jurnal
+        </p>
+        <ul className="list-disc ml-5 text-xs text-blue-600 space-y-1 font-medium">
+          <li>Minimal 50 karakter untuk deskripsi kegiatan</li>
+          <li>Deskripsikan kegiatan secara detail dan spesifik</li>
+          <li>Sertakan kendala jika ada</li>
+          <li>Upload dokumentasi pendukung</li>
+          <li>Pastikan tanggal sesuai hari kerja</li>
+        </ul>
+      </div>
+
+      {/* INFORMASI DASAR */}
+      <div>
+        <h4 className="font-bold text-slate-700 mb-3">Informasi Dasar</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="font-bold text-slate-600">Tanggal *</Label>
+            <Input
+              type="date"
+              value={formData.tanggal}
+              onChange={(e) =>
+                setFormData({ ...formData, tanggal: e.target.value })
+              }
+              className="h-12 rounded-xl bg-slate-50"
+            />
+          </div>
+          <div>
+            <Label className="font-bold text-slate-600">Status</Label>
+            <Input
+              disabled
+              value="Edit Mode"
+              className="h-12 rounded-xl bg-slate-100 text-slate-400 font-bold"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* KEGIATAN */}
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <Label className="font-bold text-slate-700">
+            Deskripsi Kegiatan *
+          </Label>
+          <span
+            className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+              formData.kegiatan.length < 50
+                ? "bg-red-50 text-red-500"
+                : "bg-green-50 text-green-600"
+            }`}
+          >
+            {formData.kegiatan.length}/50 minimum
+          </span>
+        </div>
+        <Textarea
+          value={formData.kegiatan}
+          onChange={(e) =>
+            setFormData({ ...formData, kegiatan: e.target.value })
+          }
+          className="min-h-[150px] rounded-2xl p-4 resize-none bg-slate-50 focus:bg-white"
+        />
+      </div>
+
+      {/* DOKUMENTASI */}
+      <div>
+        <Label className="font-bold text-slate-700">
+          Dokumentasi Pendukung (Opsional)
+        </Label>
+
+        <div className="mt-2 border-2 border-dashed border-slate-200 rounded-3xl p-10 text-center relative cursor-pointer hover:bg-slate-50 transition">
+          <input
+            type="file"
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            accept=".pdf,.doc,.docx,.jpg,.png"
+            onChange={handleFileUpload}
+          />
+
+          <div className="flex flex-col items-center gap-3">
+            <div className="bg-slate-100 rounded-2xl p-4 text-slate-400">
+              <Upload size={28} />
+            </div>
+            <p className="font-bold text-slate-700">
+              {formData.file
+                ? `✅ ${formData.file.split("/").pop()}`
+                : "Pilih file dokumentasi"}
+            </p>
+            <p className="text-xs text-slate-400">
+              PDF, DOC, JPG, PNG (Max 5MB)
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* FOOTER */}
+    <div className="p-8 border-t border-slate-100 flex justify-end gap-3 bg-white">
+      <Button
+        variant="outline"
+        onClick={() => setIsEditOpen(false)}
+        className="h-12 px-8 rounded-xl font-bold"
+      >
+        Batal
+      </Button>
+      <Button
+        onClick={handleUpdateJurnal}
+        disabled={formData.kegiatan.length < 50 || uploading}
+        className="h-12 px-10 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white"
+      >
+        Update Jurnal
+      </Button>
+    </div>
+
+  </DialogContent>
+</Dialog>
+
+
+
       {/* DETAIL MODAL (Gambar 20, 21, 22) */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="max-w-2xl rounded-[32px] p-0 overflow-hidden border-none shadow-2xl">
@@ -334,7 +634,7 @@ export default function JurnalHarianPage() {
                   selectedJurnal.status_verifikasi === 'disetujui' ? 'bg-green-100 text-green-600' : 
                   selectedJurnal.status_verifikasi === 'ditolak' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
                 }`}>
-                  {selectedJurnal.status_verifikasi === 'menunggu' ? 'Belum Diverifikasi' : selectedJurnal.status_verifikasi}
+                  {selectedJurnal.status_verifikasi === 'pending' ? 'Belum Diverifikasi' : selectedJurnal.status_verifikasi}
                 </Badge>
               </div>
 
