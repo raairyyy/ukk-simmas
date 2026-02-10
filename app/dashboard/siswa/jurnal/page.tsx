@@ -203,6 +203,21 @@ const handleUpdateJurnal = async () => {
   showToastMessage("Jurnal berhasil diperbarui", 3000);
 };
 
+const handleDownloadFile = async (filePath: string) => {
+  if (!filePath) return;
+
+  const { data, error } = await supabase.storage
+    .from("logbook_docs")
+    .createSignedUrl(filePath, 60); // 60 detik
+
+  if (error) {
+    showToastMessage("Gagal mengunduh file", 3000);
+    return;
+  }
+
+  window.open(data.signedUrl, "_blank");
+};
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* TOAST SUCCESS (Gambar 15) */}
@@ -704,9 +719,22 @@ const handleUpdateJurnal = async () => {
                 <div className="flex items-center justify-between p-4 bg-green-50/50 rounded-2xl border border-green-100">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white rounded-lg text-green-600 shadow-sm"><FileText size={18} /></div>
-                    <p className="text-sm font-bold text-green-800 truncate max-w-[250px]">{selectedJurnal.file || "documento1.pdf"}</p>
+<p className="text-sm font-bold text-green-800 truncate max-w-[250px]">
+  {selectedJurnal.file
+    ? selectedJurnal.file.split("/").pop()
+    : "Tidak ada file"}
+</p>
                   </div>
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white rounded-lg h-9 px-4 font-bold transition-all shadow-sm shadow-green-100 uppercase text-[10px]">Unduh</Button>
+{selectedJurnal.file && (
+  <Button
+    size="sm"
+    onClick={() => handleDownloadFile(selectedJurnal.file)}
+    className="bg-green-600 hover:bg-green-700 text-white rounded-lg h-9 px-4 font-bold transition-all shadow-sm shadow-green-100 uppercase text-[10px]"
+  >
+    Unduh
+  </Button>
+)}
+
                 </div>
               </section>
 
@@ -719,21 +747,16 @@ const handleUpdateJurnal = async () => {
       </Dialog>
 
       {/* CONFIRM DELETE MODAL (Gambar 27) */}
-      <ConfirmModal 
-        isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        onConfirm={() => {
-           // Logika delete di sini
-           setIsConfirmOpen(false);
-           setToastMessage("Jurnal berhasil dihapus");
-           setShowToast(true);
-           setTimeout(() => setShowToast(false), 3000);
-        }}
-        title="Konfirmasi Hapus"
-        description="Apakah Anda yakin ingin menghapus jurnal ini? Aksi ini tidak bisa dibatalkan."
-        confirmText="Ya, Hapus"
-        variant="danger"
-      />
+<ConfirmModal 
+  isOpen={isConfirmOpen}
+  onClose={() => setIsConfirmOpen(false)}
+  onConfirm={handleDeleteJurnal}
+  title="Konfirmasi Hapus"
+  description="Apakah Anda yakin ingin menghapus jurnal ini? Aksi ini tidak bisa dibatalkan."
+  confirmText="Ya, Hapus"
+  variant="danger"
+/>
+
     </div>
   )
 }
