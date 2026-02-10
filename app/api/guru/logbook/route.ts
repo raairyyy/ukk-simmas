@@ -10,6 +10,7 @@ const supabase = createClient(
 
 export async function GET() {
   try {
+    // 🔐 Ambil token
     const token = cookies().get("token")?.value
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -17,7 +18,7 @@ export async function GET() {
 
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!)
 
-    // 1️⃣ Ambil guru berdasarkan user_id
+    // 1️⃣ Ambil data guru berdasarkan user login
     const { data: guru, error: guruError } = await supabase
       .from("guru")
       .select("id")
@@ -38,8 +39,9 @@ export async function GET() {
         kendala,
         status_verifikasi,
         catatan_guru,
-        magang (
+        magang!inner (
           id,
+          guru_id,
           siswa (
             id,
             nama,

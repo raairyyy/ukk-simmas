@@ -1,5 +1,5 @@
 "use client"
-
+import { useEffect, useState } from "react"
 import {
   BookOpen,
   Clock,
@@ -29,7 +29,22 @@ import {
 } from "@/components/ui/table"
 
 export default function GuruJurnalPage() {
-   
+  const [data, setData] = useState<any[]>([])
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    disetujui: 0,
+    ditolak: 0
+  })
+
+  useEffect(() => {
+    fetch("/api/guru/logbook")
+      .then(res => res.json())
+      .then(res => {
+        setData(res.data || [])
+        setStats(res.stats || {})
+      })
+  }, [])
   return (
     <>
       {/* Header Page */}
@@ -43,31 +58,11 @@ export default function GuruJurnalPage() {
         </div>
 
         {/* Stat Cards Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <StatCard 
-            title="Total Logbook" 
-            value="5" 
-            desc="Laporan harian terdaftar" 
-            icon={<BookOpen className="text-[#0EA5E9]" size={24} />} 
-          />
-          <StatCard 
-            title="Belum Diverifikasi" 
-            value="2" 
-            desc="Menunggu verifikasi" 
-            icon={<Clock className="text-[#06b6d4]" size={24} />} 
-          />
-          <StatCard 
-            title="Disetujui" 
-            value="2" 
-            desc="Sudah diverifikasi" 
-            icon={<ThumbsUp className="text-[#0EA5E9]" size={24} />} 
-          />
-          <StatCard 
-            title="Ditolak" 
-            value="1" 
-            desc="Perlu perbaikan" 
-            icon={<ThumbsDown className="text-[#0EA5E9]" size={24} />} 
-          />
+        <div className="grid grid-cols-4 gap-6">
+          <StatCard title="Total Logbook" value={stats.total} icon={<BookOpen />} />
+          <StatCard title="Belum Diverifikasi" value={stats.pending} icon={<Clock />} />
+          <StatCard title="Disetujui" value={stats.disetujui} icon={<ThumbsUp />} />
+          <StatCard title="Ditolak" value={stats.ditolak} icon={<ThumbsDown />} />
         </div>
 
         {/* Main Content Card */}
@@ -127,10 +122,11 @@ export default function GuruJurnalPage() {
                      </TableRow>
                   </TableHeader>
                   <TableBody>
-                     {jurnalData.map((item, index) => (
-                        <JurnalRow key={index} data={item} />
-                     ))}
+                  {data.map((item, index) => (
+                     <JurnalRow key={index} data={item} />
+                  ))}
                   </TableBody>
+
                </Table>
             </div>
 
@@ -159,130 +155,59 @@ export default function GuruJurnalPage() {
 
 // === COMPONENTS & DATA ===
 
-function StatCard({ title, value, desc, icon }: any) {
+function StatCard({ title, value, icon }: any) {
   return (
-    <Card className="border-none shadow-sm rounded-[20px] bg-white h-[140px] flex flex-col justify-center">
+    <Card>
       <CardContent className="p-6">
-         <div className="flex justify-between items-start mb-3">
-             <p className="text-sm font-bold text-slate-500">{title}</p>
-             <div className="opacity-90">{icon}</div>
-         </div>
-         <div>
-            <h3 className="text-3xl font-extrabold text-slate-800 tracking-tight leading-none mb-1">{value}</h3>
-            <p className="text-[11px] text-slate-400 font-medium">{desc}</p>
-         </div>
+        <div className="flex justify-between">
+          <p className="text-sm font-bold">{title}</p>
+          {icon}
+        </div>
+        <h3 className="text-3xl font-extrabold">{value}</h3>
       </CardContent>
     </Card>
   )
 }
 
+
 function JurnalRow({ data }: any) {
-  // Logic warna badge status
-  const statusStyles: any = {
-    Disetujui: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    "Belum Diverifikasi": "bg-orange-50 text-orange-600 border-orange-100",
-    Ditolak: "bg-red-50 text-red-600 border-red-100",
+  const siswa = data.magang.siswa
+
+  const statusMap: any = {
+    pending: "Belum Diverifikasi",
+    disetujui: "Disetujui",
+    ditolak: "Ditolak"
   }
-  const style = statusStyles[data.status] || "bg-gray-50 text-gray-600";
+
+  const colorMap: any = {
+    pending: "bg-orange-100 text-orange-600",
+    disetujui: "bg-green-100 text-green-600",
+    ditolak: "bg-red-100 text-red-600"
+  }
 
   return (
-    <TableRow className="group border-slate-50 hover:bg-slate-50/50 transition-colors align-top">
-       <TableCell className="pl-6 py-6 align-top">
-          <Checkbox className="rounded-md border-slate-300 mt-1" />
-       </TableCell>
+    <TableRow>
+      <TableCell>
+        <b>{siswa.nama}</b><br />
+        <span className="text-xs">{siswa.nis} • {siswa.kelas}</span>
+      </TableCell>
 
-       {/* SISWA & TANGGAL */}
-       <TableCell className="py-6 align-top">
-          <div>
-             <p className="font-bold text-slate-800 text-sm mb-1">{data.siswa.nama}</p>
-             <p className="text-[11px] text-slate-500 font-medium">NIS: {data.siswa.nis}</p>
-             <p className="text-[11px] text-slate-400 mt-0.5">{data.siswa.kelas}</p>
-             <p className="text-xs text-slate-500 font-bold mt-2">{data.tanggal}</p>
-          </div>
-       </TableCell>
+      <TableCell>{data.tanggal}</TableCell>
 
-       {/* KEGIATAN & KENDALA */}
-       <TableCell className="py-6 align-top">
-          <div className="space-y-3">
-             <div>
-                <span className="text-xs font-bold text-slate-700 block mb-1">Kegiatan:</span>
-                <p className="text-sm text-slate-600 leading-relaxed">{data.kegiatan}</p>
-             </div>
-             <div>
-                <span className="text-xs font-bold text-slate-700 block mb-1">Kendala:</span>
-                <p className="text-sm text-slate-500 leading-relaxed italic">{data.kendala}</p>
-             </div>
-          </div>
-       </TableCell>
+      <TableCell>{data.kegiatan}</TableCell>
 
-       {/* STATUS */}
-       <TableCell className="py-6 align-top text-center">
-          <Badge className={`border px-3 py-1 text-[10px] font-bold shadow-none rounded-lg hover:bg-opacity-80 ${style}`}>
-             {data.status}
-          </Badge>
-       </TableCell>
+      <TableCell>
+        <Badge className={colorMap[data.status_verifikasi]}>
+          {statusMap[data.status_verifikasi]}
+        </Badge>
+      </TableCell>
 
-       {/* CATATAN GURU */}
-       <TableCell className="py-6 align-top">
-          <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 min-h-[60px]">
-             {data.catatan ? (
-                <p className="text-xs text-slate-600 italic leading-snug">{data.catatan}</p>
-             ) : (
-                <p className="text-xs text-slate-400 italic">Belum ada catatan</p>
-             )}
-          </div>
-       </TableCell>
-
-       {/* AKSI */}
-       <TableCell className="pr-8 py-6 align-top text-center">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg mt-2">
-             <Eye size={18} strokeWidth={2.5} />
-          </Button>
-       </TableCell>
+      <TableCell>
+        <Button variant="ghost" size="icon">
+          <Eye size={18} />
+        </Button>
+      </TableCell>
     </TableRow>
   )
 }
 
-// === DUMMY DATA ===
-const jurnalData = [
-  {
-    siswa: { nama: "Ahmad Rizki", nis: "2024001", kelas: "XII RPL 1" },
-    tanggal: "1 Mar 2024",
-    kegiatan: "Membuat desain UI aplikasi kasir menggunakan Figma. Melakukan analisis user experience dan wireframing untuk interface yang user-friendly.",
-    kendala: "Kesulitan menentukan skema warna yang tepat dan konsisten untuk seluruh aplikasi.",
-    status: "Disetujui",
-    catatan: "Bagus, lanjutkan dengan implementasi."
-  },
-  {
-    siswa: { nama: "Ahmad Rizki", nis: "2024001", kelas: "XII RPL 1" },
-    tanggal: "2 Mar 2024",
-    kegiatan: "Belajar backend Laravel untuk membangun REST API sistem kasir. Mempelajari konsep MVC dan routing.",
-    kendala: "Error saat menjalankan migration database dan kesulitan memahami relationship antar tabel.",
-    status: "Belum Diverifikasi",
-    catatan: ""
-  },
-  {
-    siswa: { nama: "Siti Nurhaliza", nis: "2024002", kelas: "XII RPL 1" },
-    tanggal: "1 Mar 2024",
-    kegiatan: "Setup server Linux Ubuntu untuk deployment aplikasi web. Konfigurasi Apache dan MySQL.",
-    kendala: "Belum familiar dengan command line interface dan permission system di Linux.",
-    status: "Ditolak",
-    catatan: "Perbaiki deskripsi kegiatan, terlalu singkat."
-  },
-  {
-    siswa: { nama: "Budi Santoso", nis: "2024003", kelas: "XII TKJ 1" },
-    tanggal: "3 Mar 2024",
-    kegiatan: "Melakukan troubleshooting jaringan komputer kantor dan mengkonfigurasi switch managed.",
-    kendala: "Beberapa port switch tidak berfungsi dengan baik.",
-    status: "Disetujui",
-    catatan: "Sudah bagus, dokumentasikan solusinya."
-  },
-  {
-    siswa: { nama: "Dewi Lestari", nis: "2024004", kelas: "XII RPL 2" },
-    tanggal: "4 Mar 2024",
-    kegiatan: "Membuat dokumentasi API dan testing menggunakan Postman untuk endpoint yang sudah dibuat.",
-    kendala: "Kesulitan dalam membuat dokumentasi yang comprehensive dan mudah dipahami.",
-    status: "Belum Diverifikasi",
-    catatan: ""
-  },
-]
