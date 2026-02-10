@@ -62,26 +62,26 @@ export default function JurnalHarianPage() {
     fetchJurnal()
   }, [])
 
-const fetchJurnal = async () => {
-  setLoading(true)
-  const res = await fetch("/api/logbook")
-  const data = await res.json()
+  const fetchJurnal = async () => {
+    setLoading(true)
+    const res = await fetch("/api/logbook")
+    const data = await res.json()
 
-  if (res.ok) {
-    setJurnals(data.data)
+    if (res.ok) {
+      setJurnals(data.data)
 
-    // 🔥 CEK JURNAL HARI INI
-    const today = new Date().toISOString().split("T")[0]
+      // 🔥 CEK JURNAL HARI INI
+      const today = new Date().toISOString().split("T")[0]
 
-    const existsToday = data.data.some(
-      (jurnal: any) => jurnal.tanggal === today
-    )
+      const existsToday = data.data.some(
+        (jurnal: any) => jurnal.tanggal === today
+      )
 
-    setHasTodayJurnal(existsToday)
+      setHasTodayJurnal(existsToday)
+    }
+
+    setLoading(false)
   }
-
-  setLoading(false)
-}
 
 
   const supabase = createClient(
@@ -94,11 +94,11 @@ const fetchJurnal = async () => {
     if (res.ok) window.location.href = "/login"
   }
 
-const handleSave = async () => {
-  if (uploading) {
-    alert("Tunggu upload file selesai");
-    return;
-  }
+  const handleSave = async () => {
+    if (uploading) {
+      alert("Tunggu upload file selesai");
+      return;
+    }
 
   const payload = {
     tanggal: formData.tanggal,
@@ -116,35 +116,35 @@ const handleSave = async () => {
   const data = await res.json();
 
   if (!res.ok) {
-    showToastMessage(data.error || "Gagal menyimpan jurnal", 4000);
-    return;
-  }
+      showToastMessage(data.error || "Gagal menyimpan jurnal", 4000);
+      return;
+    }
 
-  setIsAddOpen(false);
-  fetchJurnal();
-  showToastMessage("Jurnal berhasil ditambahkan", 3000);
-};
+    setIsAddOpen(false);
+    fetchJurnal();
+    showToastMessage("Jurnal berhasil ditambahkan", 3000);
+  };
 
 //fungsi delete jurnal pada siswa
-const handleDeleteJurnal = async () => {
-  if (!selectedJurnal) return;
+  const handleDeleteJurnal = async () => {
+    if (!selectedJurnal) return;
 
-  const res = await fetch(`/api/logbook/${selectedJurnal.id}`, {
-    method: "DELETE",
-  });
+    const res = await fetch(`/api/logbook/${selectedJurnal.id}`, {
+      method: "DELETE",
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!res.ok) {
-    showToastMessage(data.error || "Gagal menghapus jurnal", 4000);
-    return;
-  }
+    if (!res.ok) {
+      showToastMessage(data.error || "Gagal menghapus jurnal", 4000);
+      return;
+    }
 
-  setIsConfirmOpen(false);
-  setSelectedJurnal(null);
-  fetchJurnal();
-  showToastMessage("Jurnal berhasil dihapus", 3000);
-};
+    setIsConfirmOpen(false);
+    setSelectedJurnal(null);
+    fetchJurnal();
+    showToastMessage("Jurnal berhasil dihapus", 3000);
+  };
 
 
 

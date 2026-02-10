@@ -26,7 +26,7 @@ export default function SiswaDashboard() {
       <SharedHeader />
 
       {/* Konten Utama */}
-      <main className="p-10 max-w-[1400px] mx-auto">
+      <main className="p-10 max-w-[1700px] mx-auto">
         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
           Selamat datang, {userData?.name || "..."}!
         </h1>
