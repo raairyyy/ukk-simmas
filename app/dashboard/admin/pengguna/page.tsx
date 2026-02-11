@@ -46,6 +46,8 @@ export default function UserManagement() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
+  const isAdminLogin = userData?.role === "admin"
+
 
   // Form States
 const [formData, setFormData] = useState({
@@ -240,11 +242,13 @@ const resetForm = () => {
               <Select value={roleFilter} onValueChange={setRoleFilter}>
                 <SelectTrigger className="w-[180px] h-12 rounded-xl border-slate-200 font-semibold"><SelectValue placeholder="Semua Role" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Role</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  {!isAdminLogin && (
+                    <SelectItem value="admin">Admin</SelectItem>
+                  )}
                   <SelectItem value="guru">Guru</SelectItem>
                   <SelectItem value="siswa">Siswa</SelectItem>
                 </SelectContent>
+
               </Select>
             </div>
 
@@ -333,7 +337,10 @@ const resetForm = () => {
               <Select value={formData.role} onValueChange={(val) => setFormData({...formData, role: val})}>
                 <SelectTrigger className="h-12 rounded-xl bg-slate-50/50"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  {userData && userData.role !== "admin" && (
+                    <SelectItem value="admin">Admin</SelectItem>
+                  )}
+
                   <SelectItem value="guru">Guru</SelectItem>
                   <SelectItem value="siswa">Siswa</SelectItem>
                 </SelectContent>

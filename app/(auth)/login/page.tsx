@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react"
 import { useRouter } from "next/navigation"
-
+import Link from "next/link"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -194,10 +194,14 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         {/* Register */}
         <p className="text-center text-sm text-gray-600 mt-5">
           Don&apos;t have an account?{" "}
-          <span className="text-blue-600 font-medium cursor-pointer hover:underline">
+          <Link
+            href="/register"
+            className="text-blue-600 font-medium hover:underline"
+          >
             Sign up
-          </span>
+          </Link>
         </p>
+
 
         {/* Terms */}
         <p className="text-center text-xs text-gray-400 mt-6">

@@ -22,6 +22,20 @@ export async function POST(req: Request) {
 
     const hashed = await bcrypt.hash(password, 10)
 
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", email)
+      .single()
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Email sudah terdaftar" },
+        { status: 400 }
+      )
+    }
+
+
     // 1. Insert ke users (role siswa)
     const { data: user, error } = await supabase
       .from("users")
