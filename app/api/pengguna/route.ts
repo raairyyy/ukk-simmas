@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     const { 
       name, email, role, password, verified, 
       // Field khusus siswa (opsional)
-      nis, kelas, jurusan, guru_id 
+      nis, kelas, jurusan, guru_id, alamat, telepon
     } = body;
 
     // 1. Validasi Input Dasar
@@ -44,17 +44,20 @@ export async function POST(req: Request) {
 
     // 4. Jika Role SISWA, Insert ke tabel SISWA & MAGANG (Untuk Guru Pembimbing)
 // setelah users berhasil dibuat
-if (role === 'siswa') {
+if (role === "siswa") {
   await supabase
     .from("siswa")
     .update({
       nis,
       kelas,
       jurusan,
-      guru_id: guru_id ? Number(guru_id) : null
+      guru_id: guru_id ? Number(guru_id) : null,
+      alamat: alamat || null,
+      telepon: telepon || null
     })
     .eq("user_id", user.id);
 }
+
 
 
 

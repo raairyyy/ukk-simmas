@@ -49,18 +49,24 @@ export default function UserManagement() {
 
   // Form States
 const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    role: "siswa",
-    password: "",
-    confirmPassword: "",
-    verifiedStatus: "unverified",
-    // Field Khusus Siswa
-    nis: "",
-    kelas: "",
-    jurusan: "",
-    guru_id: ""
-  })
+  name: "",
+  email: "",
+  role: "siswa",
+  password: "",
+  confirmPassword: "",
+  verifiedStatus: "unverified",
+
+  // Akademik
+  nis: "",
+  kelas: "",
+  jurusan: "",
+  guru_id: "",
+
+  // OPSIONAL
+  alamat: "",
+  telepon: ""
+})
+
 
   // LOGIKA VALIDASI: Tombol aktif hanya jika semua field terisi
 const isUserFormValid = 
@@ -112,12 +118,14 @@ const handleSaveAdd = async () => {
           role: formData.role,
           password: formData.password,
           verified: formData.verifiedStatus === "verified",
-          // Kirim data siswa jika role siswa
-          ...(formData.role === 'siswa' && {
+
+          ...(formData.role === "siswa" && {
             nis: formData.nis,
             kelas: formData.kelas,
             jurusan: formData.jurusan,
-            guru_id: formData.guru_id
+            guru_id: formData.guru_id,
+            alamat: formData.alamat,
+            telepon: formData.telepon
           })
         }),
       });
@@ -168,7 +176,7 @@ const handleSaveAdd = async () => {
 const resetForm = () => {
     setFormData({ 
       name: "", email: "", role: "siswa", password: "", confirmPassword: "", verifiedStatus: "unverified",
-      nis: "", kelas: "", jurusan: "", guru_id: ""
+      nis: "", kelas: "", jurusan: "", guru_id: "", alamat: "", telepon: ""
     })
     setShowPassword(false)
     setShowConfirmPassword(false)
@@ -352,15 +360,32 @@ const resetForm = () => {
 
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-slate-600 uppercase">Jurusan <span className="text-red-500">*</span></Label>
-                  <Select value={formData.jurusan} onValueChange={(val) => setFormData({...formData, jurusan: val})}>
-                    <SelectTrigger className="h-11 rounded-lg bg-white"><SelectValue placeholder="Pilih Jurusan" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Rekayasa Perangkat Lunak">Rekayasa Perangkat Lunak</SelectItem>
-                      <SelectItem value="Teknik Komputer Jaringan">Teknik Komputer Jaringan</SelectItem>
-                      <SelectItem value="Multimedia">Multimedia</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <Input value={formData.jurusan} onChange={(e) => setFormData({...formData, jurusan: e.target.value})} placeholder="Contoh: Rekayasa Perangkat Lunak" className="h-11 rounded-lg bg-white" />
                 </div>
+                <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-600 uppercase">
+                  Alamat (Opsional)
+                </Label>
+                <Input
+                  value={formData.alamat}
+                  onChange={(e) => setFormData({ ...formData, alamat: e.target.value })}
+                  placeholder="Alamat tempat tinggal"
+                  className="h-11 rounded-lg bg-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-600 uppercase">
+                  No. Telepon (Opsional)
+                </Label>
+                <Input
+                  value={formData.telepon}
+                  onChange={(e) => setFormData({ ...formData, telepon: e.target.value })}
+                  placeholder="08xxxxxxxxxx"
+                  className="h-11 rounded-lg bg-white"
+                />
+              </div>
+
 
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-slate-600 uppercase">Guru Pembimbing (Opsional)</Label>
