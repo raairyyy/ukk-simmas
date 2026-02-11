@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { GoogleLogin } from "@react-oauth/google"
+
 
 export default function RegisterPage() {
   const [name, setName] = useState("")
@@ -43,6 +45,33 @@ export default function RegisterPage() {
       setIsLoading(false)
     }
   }
+  
+  const handleGoogleLogin = async (credential: string) => {
+  try {
+    const res = await fetch("/api/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential }),
+      credentials: "include",
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      setError(data.error || "Google login gagal")
+      return
+    }
+
+    // redirect berdasarkan role
+    if (data.role === "admin") window.location.href = "/dashboard/admin"
+    else if (data.role === "guru") window.location.href = "/dashboard/guru"
+    else window.location.href = "/dashboard/siswa"
+
+  } catch (err) {
+    setError("Server error")
+  }
+}
+
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#eef3ff] via-[#f5f8ff] to-[#eef3ff]">
@@ -142,6 +171,19 @@ export default function RegisterPage() {
           >
             {isLoading ? "Creating account..." : "Sign Up"}
           </Button>
+
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={(res) => {
+                if (res.credential) {
+                  handleGoogleLogin(res.credential)
+                }
+              }}
+              onError={() => {
+                setError("Google login gagal")
+              }}
+            />
+          </div>
         </form>
 
         {/* login link */}
