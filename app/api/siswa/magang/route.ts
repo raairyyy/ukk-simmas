@@ -32,24 +32,42 @@ async function getSiswaIdFromToken() {
 // ==========================================
 export async function GET() {
   try {
-    // 1. Ambil ID Siswa (Secure)
     const siswaId = await getSiswaIdFromToken();
 
-    // 2. Ambil SEMUA data magang (bukan single)
-    // Supaya frontend bisa cek dudi_id mana saja yang sudah didaftar
     const { data, error } = await supabase
       .from("magang")
-      .select("dudi_id, status") // Ambil kolom penting saja
-      .eq("siswa_id", siswaId);
+      .select(`
+        id,
+        status,
+        nilai_akhir,
+        tanggal_mulai,
+        tanggal_selesai,
+        siswa:siswa_id (
+          nama,
+          nis,
+          kelas,
+          jurusan
+        ),
+        dudi:dudi_id (
+          nama_perusahaan,
+          alamat
+        )
+      `)
+      .eq("siswa_id", siswaId)
+      .eq("status", "berlangsung")
+      .maybeSingle(); // ⬅️ penting
 
     if (error) throw error;
 
-    return NextResponse.json({ data }); // Return Array
+    // Kalau tidak ada magang berlangsung → data = null
+    return NextResponse.json({ data });
+
   } catch (err: any) {
     const status = err.message === "Unauthorized" ? 401 : 500;
     return NextResponse.json({ error: err.message }, { status });
   }
 }
+
 
 // ==========================================
 // POST: Daftar Magang Baru (Limit 3 via Trigger DB)
@@ -84,25 +102,13 @@ export async function POST(req: Request) {
         created_at: new Date()
       }]);
 
-if (insertError) {
-  // Tangkap SEMUA error dari trigger limit
-  if (
-    insertError.message.includes("maksimal") ||
-    insertError.message.includes("Pendaftaran ditolak")
-  ) {
-    return NextResponse.json(
-      { error: "Batas maksimal pendaftaran tercapai (maksimal 3 DUDI)" },
-      { status: 400 }
-    );
-  }
-
-  // Error lain
-  return NextResponse.json(
-    { error: insertError.message },
-    { status: 500 }
-  );
-}
-
+    if (insertError) {
+      // Tangkap pesan error dari trigger PostgreSQL
+      if (insertError.message.includes("Batas maksimal")) {
+        return NextResponse.json({ error: "Batas maksimal pendaftaran tercapai (Max 3 Perusahaan)" }, { status: 400 });
+      }
+      throw insertError;
+    }
 
     return NextResponse.json({ success: true, message: "Pendaftaran berhasil diajukan" });
 

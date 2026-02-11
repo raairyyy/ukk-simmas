@@ -150,10 +150,21 @@ const handleDaftar = async (id: number) => {
       {/* TOAST SUCCESS (GAMBAR 15) */}
 {showToast && (
   <div className="fixed top-6 right-6 z-[200] animate-in slide-in-from-right duration-300">
-    <div className="bg-red-600 text-white px-5 py-4 rounded-2xl shadow-xl flex items-center gap-3 min-w-[360px]">
-      <div className="bg-white/20 p-1.5 rounded-full">
-        <Bell size={20} strokeWidth={3} />
-      </div>
+<div
+  className={`px-5 py-4 rounded-2xl shadow-xl flex items-center gap-3 min-w-[360px] text-white ${
+    toastType === "success"
+      ? "bg-emerald-600"
+      : "bg-red-600"
+  }`}
+>
+<div className="bg-white/20 p-1.5 rounded-full">
+  {toastType === "success" ? (
+    <CheckCircle2 size={20} strokeWidth={3} />
+  ) : (
+    <XCircle size={20} strokeWidth={3} />
+  )}
+</div>
+
       <p className="font-bold text-sm flex-1">
         {toastMessage}
       </p>
