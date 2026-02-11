@@ -43,46 +43,20 @@ export async function POST(req: Request) {
     if (userError) throw userError;
 
     // 4. Jika Role SISWA, Insert ke tabel SISWA & MAGANG (Untuk Guru Pembimbing)
-    if (role === 'siswa') {
-      // Validasi input siswa
-      if (!nis || !kelas || !jurusan) {
-        // Rollback manual (hapus user yg baru dibuat jika data siswa kurang)
-        await supabase.from("users").delete().eq("id", user.id);
-        return NextResponse.json({ error: "Data siswa (NIS, Kelas, Jurusan) wajib diisi" }, { status: 400 });
-      }
+// setelah users berhasil dibuat
+if (role === 'siswa') {
+  await supabase
+    .from("siswa")
+    .update({
+      nis,
+      kelas,
+      jurusan,
+      guru_id: guru_id ? Number(guru_id) : null
+    })
+    .eq("user_id", user.id);
+}
 
-      // Insert ke tabel SISWA
-      const { data: siswaData, error: siswaError } = await supabase
-        .from("siswa")
-        .insert([{
-          user_id: user.id,
-          nama: name,
-          nis,
-          kelas,
-          jurusan
-        }])
-        .select()
-        .single();
 
-      if (siswaError) {
-        await supabase.from("users").delete().eq("id", user.id); // Rollback
-        throw siswaError;
-      }
-
-      // Jika ada Guru Pembimbing, buat relasi di tabel MAGANG
-      // (Asumsi: hubungan siswa-guru ada di tabel magang)
-      if (guru_id) {
-        const { error: magangError } = await supabase
-          .from("magang")
-          .insert([{
-            siswa_id: siswaData.id,
-            guru_id: parseInt(guru_id), // Pastikan format integer
-            status: 'pending' // Default status
-          }]);
-          
-        if (magangError) console.error("Gagal set guru pembimbing:", magangError);
-      }
-    }
 
     return NextResponse.json({ message: "User berhasil dibuat" }, { status: 201 });
   } catch (error: any) {

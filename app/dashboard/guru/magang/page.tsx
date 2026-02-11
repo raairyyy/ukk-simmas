@@ -104,11 +104,12 @@ export default function GuruMagangPage() {
         return
     }
 
-    const payload = {
-      ...formData,
-      guru_id: guruId,
-      status: "berlangsung" // Default status aktif
-    }
+const payload = {
+  siswa_id: formData.siswa_id,
+  dudi_id: formData.dudi_id,
+  tanggal_mulai: formData.tanggal_mulai,
+  tanggal_selesai: formData.tanggal_selesai
+}
 
     const res = await fetch("/api/guru/magang", {
       method: "POST",
@@ -407,11 +408,12 @@ export default function GuruMagangPage() {
                       <Select value={formData.status} onValueChange={(val) => setFormData({...formData, status: val})}>
                          <SelectTrigger className="h-12 rounded-xl bg-white border-slate-200 font-medium"><SelectValue /></SelectTrigger>
                          <SelectContent>
-                            <SelectItem value="berlangsung">Aktif (Berlangsung)</SelectItem>
-                            <SelectItem value="selesai">Selesai</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="dibatalkan">Dibatalkan</SelectItem>
-                            <SelectItem value="ditolak">Ditolak</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="diterima">Diterima</SelectItem>
+                          <SelectItem value="ditolak">Ditolak</SelectItem>
+                          <SelectItem value="berlangsung">Berlangsung</SelectItem>
+                          <SelectItem value="selesai">Selesai</SelectItem>
+                          <SelectItem value="dibatalkan">Dibatalkan</SelectItem>
                          </SelectContent>
                       </Select>
                    </div>

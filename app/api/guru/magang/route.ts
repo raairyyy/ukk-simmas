@@ -55,18 +55,20 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     // Validasi Field Wajib
-    if (!body.siswa_id || !body.dudi_id || !body.guru_id) {
+if (!body.siswa_id || !body.dudi_id) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
     const { data, error } = await supabase
       .from("magang")
-      .insert([{
-        ...body,
-        status: "berlangsung", // DEFAULT STATUS SESUAI ENUM DB
-        created_at: new Date(),
-        updated_at: new Date()
-      }])
+.insert([{
+  siswa_id: Number(body.siswa_id),
+  dudi_id: Number(body.dudi_id),
+  tanggal_mulai: body.tanggal_mulai || null,
+  tanggal_selesai: body.tanggal_selesai || null,
+  status: "berlangsung"
+}])
+
       .select();
 
     if (error) throw error;
