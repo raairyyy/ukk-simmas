@@ -21,7 +21,7 @@ type Dudi = {
   telepon: string
   email: string
   penanggung_jawab: string
-  status_magang?: "tersedia" | "menunggu" | "sudah_mendaftar"
+  status_magang?: "tersedia" | "menunggu" | "diterima" | "berlangsung" | "ditolak"
   kuota_total: number
   kuota_terisi: number
   bidang_usaha: string
@@ -82,10 +82,12 @@ const fetchDudi = async () => {
           let status = "tersedia"
 
           if (myApp) {
-             if (myApp.status === "pending") status = "menunggu"
-             else if (myApp.status === "berlangsung" || myApp.status === "diterima") status = "berlangsung"
-             else if (myApp.status === "ditolak") status = "tersedia" // Boleh daftar lagi jika ditolak
+            if (myApp.status === "pending") status = "menunggu"
+            else if (myApp.status === "diterima") status = "diterima"
+            else if (myApp.status === "berlangsung") status = "berlangsung"
+            else if (myApp.status === "ditolak") status = "ditolak"
           }
+
 
           return {
             ...d,
@@ -199,7 +201,27 @@ const handleDaftar = async (id: number) => {
                       <h3 className="font-bold text-slate-800 text-lg leading-tight">{d.nama_perusahaan}</h3>
                       <p className="text-sm text-[#00A9D8] font-bold mt-1">{d.bidang_usaha}</p>
                       {d.status_magang === "menunggu" && (
-                        <Badge className="bg-amber-100 text-amber-700 border-none mt-2 font-bold px-3 py-1 rounded-lg">Menunggu</Badge>
+                        <Badge className="bg-amber-100 text-amber-700 font-bold">
+                          Menunggu
+                        </Badge>
+                      )}
+
+                      {d.status_magang === "diterima" && (
+                        <Badge className="bg-blue-100 text-blue-700 font-bold">
+                          Diterima
+                        </Badge>
+                      )}
+
+                      {d.status_magang === "berlangsung" && (
+                        <Badge className="bg-emerald-100 text-emerald-700 font-bold">
+                          Berlangsung
+                        </Badge>
+                      )}
+
+                      {d.status_magang === "ditolak" && (
+                        <Badge className="bg-red-100 text-red-700 font-bold">
+                          Ditolak
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -237,7 +259,7 @@ const handleDaftar = async (id: number) => {
                     <Info size={18} className="mr-2" /> Detail
                   </Button>
                   
-                  {d.status_magang === "tersedia" ? (
+                  {d.status_magang === "tersedia" || d.status_magang === "ditolak" ? (
                     <Button 
                       onClick={() => handleDaftar(d.id)}
                       className="flex-1 h-12 rounded-xl font-bold bg-[#00A9D8] hover:bg-[#0092ba] text-white shadow-lg shadow-blue-100"
