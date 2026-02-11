@@ -146,21 +146,24 @@ const handleDaftar = async (id: number) => {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* TOAST SUCCESS (GAMBAR 15) */}
-      {showToast && (
-        <div className="fixed top-6 right-6 z-[200] animate-in slide-in-from-right duration-300">
-          <div className="bg-[#84cc16] text-white px-5 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-white/20 min-w-[400px]">
-            <div className="bg-white/20 p-1.5 rounded-full">
-              <CheckCircle2 size={20} strokeWidth={3} />
-            </div>
-            <p className="font-bold text-sm flex-1 leading-relaxed">
-              Pendaftaran magang berhasil diajukan, menunggu verifikasi dari pihak guru.
-            </p>
-            <button onClick={() => setShowToast(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
-              <X size={20} />
-            </button>
-          </div>
-        </div>
-      )}
+{showToast && (
+  <div className="fixed top-6 right-6 z-[200] animate-in slide-in-from-right duration-300">
+    <div className="bg-red-600 text-white px-5 py-4 rounded-2xl shadow-xl flex items-center gap-3 min-w-[360px]">
+      <div className="bg-white/20 p-1.5 rounded-full">
+        <Bell size={20} strokeWidth={3} />
+      </div>
+      <p className="font-bold text-sm flex-1">
+        {toastMessage}
+      </p>
+      <button
+        onClick={() => setShowToast(false)}
+        className="p-1 hover:bg-white/10 rounded-lg"
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+)}
 
       {/* HEADER */}
       <SharedHeader />

@@ -84,13 +84,25 @@ export async function POST(req: Request) {
         created_at: new Date()
       }]);
 
-    if (insertError) {
-      // Tangkap pesan error dari trigger PostgreSQL
-      if (insertError.message.includes("Batas maksimal")) {
-        return NextResponse.json({ error: "Batas maksimal pendaftaran tercapai (Max 3 Perusahaan)" }, { status: 400 });
-      }
-      throw insertError;
-    }
+if (insertError) {
+  // Tangkap SEMUA error dari trigger limit
+  if (
+    insertError.message.includes("maksimal") ||
+    insertError.message.includes("Pendaftaran ditolak")
+  ) {
+    return NextResponse.json(
+      { error: "Batas maksimal pendaftaran tercapai (maksimal 3 DUDI)" },
+      { status: 400 }
+    );
+  }
+
+  // Error lain
+  return NextResponse.json(
+    { error: insertError.message },
+    { status: 500 }
+  );
+}
+
 
     return NextResponse.json({ success: true, message: "Pendaftaran berhasil diajukan" });
 
